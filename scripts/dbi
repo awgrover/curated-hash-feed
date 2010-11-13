@@ -1,0 +1,39 @@
+#!/usr/bin/env perl
+# output the dbi connection info
+
+use strict; use warnings;
+
+use feature 'switch';
+use feature 'say';
+use Data::Dumper;
+use lib qw(lib);
+use AutomaticPlanet::Config;
+
+given($ARGV[0]) {
+
+    when("--perl") { # perl Dumper (array ref)
+        local $Data::Dumper::Indent = 0;
+        local $Data::Dumper::Terse = 1;
+        say Dumper($Config->{'dbi'});
+        }
+    when("--cli") { # dbi:... "user" "pass"
+        say join(" ",map { $_ || "''" } @{ $Config->{'dbi'} })
+        }
+    when("-h") { # help
+        help();
+        }
+    default {
+        help();
+        }
+    }
+
+sub help {
+    say "Usage:";
+    say "$0 -h | --format";
+    my @args = `grep ' when' $0 | grep -v system`;
+    print map {
+        s/when\("//;
+        s/"\) {//;
+        $_
+        } @args;
+    }

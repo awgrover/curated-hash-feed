@@ -1,0 +1,21 @@
+#!/usr/bin/env perl
+# output the dbi connection info
+
+use strict; use warnings;
+
+use feature 'switch';
+use feature 'say';
+use Data::Dumper;
+use lib qw(lib);
+use AutomaticPlanet::Config;
+
+given($Config->{'dbi'}->[0]) {
+    when(/^dbi:SQLite:/) {
+        my ($filename) = $_ =~ /=(.+)/;
+        exec("sqlite3 $filename");
+        }
+    default {
+        die "Don't know the command line for $_";
+        }
+    }
+        

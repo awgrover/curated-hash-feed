@@ -1,0 +1,119 @@
+#!/usr/bin/env perl
+# make the base classes for dbix from extant schema
+# OR make the db from the captured schema
+# OR capture the ddl
+
+use strict; use warnings; no warnings 'uninitialized';
+
+use feature 'switch';
+use feature 'say';
+use lib qw(lib);
+use AutomaticPlanet::Config;
+
+given($ARGV[0]) {
+
+    when("--deploy") { # build db from schema files
+        deploy();
+        }
+    when(["--models","-m"]) { # create/update the models
+        capture_model();
+        }
+    when(["--schema","-s"]) { # capture the ddl
+        capture_ddl();
+        }
+    when("--erd") { # create the ERD (docs/erd.svg)
+      system("ERD `scripts/dbi --cli` '' main | dot -Kneato -Tsvg -Gsplines=true > docs/erd.svg");
+      }
+    when("-h") { # help
+        help();
+        }
+    default {
+        help();
+        }
+    }
+
+sub help {
+    say "Usage:";
+    say "$0 -h | --format";
+    my @args = `grep ' when' $0 | grep -v system`;
+    print map {
+        s/when\("//;
+        s/"\) {//;
+        $_
+        } @args;
+    }
+
+sub deploy {
+    require AutomaticPlanet::Model;
+    my $schema = AutomaticPlanet::Model->connect( @{$Config->{'dbi'}}, { AutoCommit => 1 });
+
+    $schema->deploy( { add_drop_table => 1, debug => 0 } );
+    }
+
+sub capture_ddl {
+  require AutomaticPlanet::Schema;
+  my $db_dir = 'db';
+  my @formats = qw(XML YAML SQLite);
+  my $pattern = AutomaticPlanet::Schema->db->ddl_filename('YAML', '*', $db_dir, undef);
+
+  my $re_pattern = quotemeta($pattern);
+  $re_pattern =~ s/\\\*/([^[-]+)/;
+
+  my $pre_version = (sort map {my ($v) = $_ =~ /$re_pattern/; $v} glob($pattern))[-1];
+  my $next_version = ($pre_version || 0) + 1;
+
+  foreach my $fmt (@formats) {
+    eval {
+      AutomaticPlanet::Schema->db->create_ddl_dir([$fmt],$next_version, $db_dir, $pre_version, { add_drop_table => 1 });
+      };
+    if ($@) {
+      if (ref($@) eq 'DBIx::Class::Exception' && $@.'' =~ /'DBIx::Class::Schema::create_ddl_dir(): translate: Error with parser 'SQL::Translator::Parser::SQLite':  no results at /) {
+        # SQLite throws, but works. go figure
+        warn "\tAbove error message indicates the 'alter' wasn't produced for SQLite\n";
+        }
+      elsif ($@ =~ /^SQL::Translator::Producer::YAML cant alter_drop_index at /) {
+        warn "Can't produce the 'alter' for the YAML ddl\n";
+        }
+      else {
+        warn "ref ",ref($@);
+        warn "msg '".$@->{'msg'}."'" if ref($@);
+        die $@;
+        }
+      }
+    }
+
+  my $was = defined($pre_version) ? AutomaticPlanet::Schema->db->ddl_filename('YAML', $pre_version, $db_dir, undef) : undef;
+  my $newer = AutomaticPlanet::Schema->db->ddl_filename('YAML', $next_version, $db_dir, undef);
+  if ($was && system("diff $was $newer > /dev/null") == 0) {
+    print "DDL is same as last version ($was). Removing files for version $next_version\n";
+    unlink AutomaticPlanet::Schema->db->ddl_filename($_, $next_version, $db_dir, undef) foreach @formats;
+    unlink AutomaticPlanet::Schema->db->ddl_filename($_, $next_version, $db_dir, $pre_version) foreach @formats;
+    }
+  else {
+    print "Created DDL $newer ".( defined($pre_version) ? "(and 'alter' file)" : "")."\n";
+    warn "The SQLite sql is probably missing 'references', i.e. foreign key declarations!\n";
+    }
+
+  }
+
+sub capture_model {
+    require DBIx::Class::Schema::Loader;
+    DBIx::Class::Schema::Loader::make_schema_at( 
+        'AutomaticPlanet::Schema', 
+        { 
+            debug => 1,
+            use_moose => 1,
+            result_base_class => 'AutomaticPlanet::Model',
+            use_namespaces => 1,
+            result_namespace => '+AutomaticPlanet::Model',
+            # default_resultset_class,
+            dump_directory => 'lib',
+            relationship_attrs => {
+              has_many => { cascade_delete => 1 },
+              }
+            # overwrite_modifications => 1,
+            },
+        $Config->{'dbi'},
+        );
+    # system('dbicdump -o dump_directory=lib -o debug=1 AutomaticPlanet::Model `scripts/dbi --cli`');
+    }

@@ -1,0 +1,22 @@
+#!/usr/bin/env perl
+# Usage: --- file OR 'code'
+# Also, you may "require" this file to get context/environment for your own scripts
+
+use strict; use warnings; no warnings 'uninitialized';
+
+use Data::Dumper;
+use File::Basename;
+use Verbose;
+use lib qw(lib);
+use env;
+
+if ($0 eq __FILE__) {
+    if (-e $ARGV[0]) {
+        do $ARGV[0];
+        }
+    else {
+        eval $ARGV[0];
+        }
+    die $@ if $@;
+    }
+1;

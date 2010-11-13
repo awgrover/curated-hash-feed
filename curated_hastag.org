@@ -1,0 +1,61 @@
+* Curate a hashtag
+** There is a hashtag we wish to curate to our own Curated X stream
+*** We need a twitter account for each hashtag
+**** It should be automatically created at some point.
+*** We designate a hashtag
+**** Object: The Curation Stream
+***** Use a web-page as the first object
+****** title:
+****** description:
+***** hashtag:
+***** twitter-account:
+***** oauth key:
+**** Add hash-tag
+**** List/browse/search hash-tags
+** We are users authorized to edit the info
+*** 1ST: single login
+*** then: different logins for audit/attribution/segmentation
+*** then: groups for teams to edit
+*** then: roles for each action... (use caps)
+*** Object: User descriptive-name, openid
+**** gravatar
+**** Manual user-add
+**** then, user-add by "su"
+**** 
+** Certain twits are trusted to provide tweets on the hashtag
+*** hashtag.add-twit, suspend-twit, delete-twit
+*** check for twit on add for sanity
+*** advise on use of hashtag, for further sanity
+*** then confirm (workflow)
+** We want a workflow to handle twits
+*** candidate, reject, active
+*** make the workflow configurable..
+*** Dashboard page shows things to take action on
+**** A user only wants to see certain workstates (per curation-stream)
+** We retweet them to our stream: The Curated X
+*** periodically (10minutes) we check for our hashtag in good-twits.
+*** and retweet to our stream X
+** Anyone can nominate a twit.
+*** Use twitter to nominate: 
+**** #hashtagx-nominate @xxx
+**** @curatedstream blahblah @xxx
+*** The nominee should agree to use the hashtag
+**** How? Force confirmed visit to our site?
+** Established twits use their own tag
+*** Add "alias" to our hashtag for a twit
+** We should discover other twits using the hashtag well & trust them
+*** Search for #hashtag, filter out accepted-twits. group by twit
+*** Add "candidate" button to add as candidate
+** We should provide a recent-history of the stream: rss or just twitter?
+*** Twitter to start
+*** Atom later (format)
+** We should hand out biz cards for the hashtag at cool events
+*** To the organizers, promoters, performers, etc.
+** Put up guerilla posters for the stream.
+** A particular stream should be a member of a family of streams.
+*** e.g. cool-events is part of Baltimore
+** Spread to other locales, etc.
+** Put in some sanity checking to prevent catastrophes
+*** When retweeting, limit to n (10 at a time?)
+*** Notice if a twit has too many (10/day?)
+** All these parameters are per-curation-stream

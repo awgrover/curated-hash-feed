@@ -1,0 +1,3 @@
+#!/bin/bash
+stamp=`date +%Y%m%d-%H%M%S`
+cp db/db.sqlite db/db.sqlite.$stamp

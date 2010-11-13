@@ -1,0 +1,36 @@
+#!/perl
+BEGIN {
+        use CGI::Carp qw(carpout);
+        open(LOG, ">>error_log") or
+                die("Unable to open error_log: $!\n");
+        carpout(LOG);
+}
+
+Package CurationTwitterStream;
+use base qw(WebApp::WebApp);
+use Memoize;
+
+memoize('config'); # for performance
+sub config
+        {
+        my $self=shift;
+        my $configFromFileAndOtherSetup = $self->SUPER::config;
+        return {
+                %$configFromFileAndOtherSetup,
+                # imageUrl => $configFromFileAndOtherSetup->{'urlBase'}."/../bobsimages",
+                # moreInitialSlots=>andTheirValues,
+                };
+        }
+
+sub setPageContext_general
+        {
+        my $self=shift;
+
+        $self->SUPER::setPageContext_general();
+        
+        # Put objects in the context: all requests
+        # $self->pageContext->{'catalogRoot'} = CatalogRoot->new,
+        
+# Go
+__PACKAGE__->new()->main();
+

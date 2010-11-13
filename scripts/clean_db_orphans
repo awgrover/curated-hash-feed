@@ -1,0 +1,122 @@
+#!/usr/bin/env perl
+use warnings; use strict; no warnings 'uninitialized';
+require 'scripts/runner';
+use Verbose;
+use lib qw(lib);
+use env;
+
+my @danglers = (
+        # delete orphans of accept/reject
+        {
+        table => 'url',
+        id => 'id',
+        expr => "left join locale_urls on (id=locale_urls.url_id) where locale_urls.locale_id is null",
+        },
+        {
+        table => 'locale_urls',
+        id => 'url_id,locale_id',  
+        expr => 'left join locale on (locale_id=locale.id) left join url on (url_id=url.id) where locale.id is null or url.id is null' 
+        },
+        {
+        table => 'rss_urls',
+        id => 'url_id,rss_id',
+        expr => 'left join url on (rss_urls.url_id=url.id) where url.id is null',
+        },
+        {
+        table => 'rss_urls',
+        id => 'url_id,rss_id',
+        expr => 'left join url on (rss_urls.rss_id=url.id) where url.id is null',
+        }
+    );
+
+my @Dups = (
+    # ($ids, $table, $irrelevant)
+    # uses "stamp" for $irrelevant if undef
+    [[qw(url_id rss_id)], 'rss_urls', undef],
+    [[qw(url_id locale_id)], 'locale_urls', undef],
+    );
+
+our $DBH;
+
+sub main {
+
+    $DBH = AutomaticPlanet::Schema::db->storage->dbh;
+
+    my $orphans = 0;
+
+    cleanup_dups();
+
+    # till nothing gets cleaned up
+    my $again = 1;
+    while ($again) {
+        $again = 0;
+        foreach my $info (@danglers) {
+            my $danglers = query($info);
+            cleanup($info, $danglers) if $danglers;
+            $orphans += $danglers ? @$danglers : 0;
+            $again |= !!$danglers;
+            }
+        }
+
+    print "Orphans :$orphans\n";
+    }
+
+sub cleanup_dups {
+    # dup entries
+
+    my $ct = 0;
+    foreach (@Dups) {
+      my ($ids, $table, $irrelevant) = @$_;
+
+      @$irrelevant{qw(stamp)} = (undef,) if !$irrelevant;
+
+      $ids = [$ids] if ! ref $ids;
+      my %ids; @ids{@$ids} = (undef,);
+
+      my $query = "select * from $table limit 1";
+      my $sth = $DBH->prepare($query);
+      $sth->execute;
+      my @relevant = grep {! exists($irrelevant->{$_}) && ! exists($ids{$_})} @{$sth->{'NAME'}};
+      push @relevant, @$ids;
+      $query = "select distinct ".join(",",@relevant).",count(*) from $table group by ".join(",",@$ids)." having count(*) > 1;";
+      vverbose 1,"Dups: $query";
+      my $rez = $DBH->selectall_arrayref($query);
+      foreach my $row (@$rez) {
+        $DBH->begin_work;
+          my $by_id = join(" and ",map{"$_=?"} @$ids);
+          $ct += pop @$row; # the count
+          $ct--;
+          my @id_vals = @$row[($#$row - $#$ids)..$#$row];
+          vverbose 1,"Cleanup $by_id : ".join(",",@id_vals);
+
+          my @other = $DBH->selectrow_array("select ".join(",",keys %$irrelevant)." from $table where $by_id",{},@id_vals);
+          vverbose 1,"Other: ",join(",",keys %$irrelevant)," = ",join(",",@other);
+          $query = "delete from $table where ".join(" and ",map{"$_=?"} @$ids);
+          vverbose 1,"Delete dups: $query";
+          $DBH->do($query,{},@id_vals);
+          $query = "insert into $table (".join(",",@relevant, keys %$irrelevant).") values(".join(',',map{'?'} (@$row,@other)).")";
+          vverbose 1,"Insert $query : ".join(",",@$row,@other);
+          $DBH->do($query,{},@$row,@other);
+        $DBH->commit;
+        }
+      }
+    print "Dups removed: $ct\n" if $ct;
+    }
+
+sub query {
+    my ($info) = @_;
+    my $query = "select distinct ".$info->{'id'}." from ".$info->{'table'}." ".$info->{'expr'};
+    my $rez = $DBH->selectall_arrayref($query, { Slice => {} });
+    return @$rez ? $rez : undef;
+    }
+
+sub cleanup {
+    my ($info, $ids) = @_;
+    print "Orphans in ".$info->{'table'}.":".@$ids."\n";
+    foreach my $target (@$ids) {
+        my $sql = "delete from ".$info->{'table'}." where ".join(" and ",map {"$_ = ?"} keys %$target);
+        $DBH->do($sql,{},values %$target);
+        }
+    }
+
+main();
