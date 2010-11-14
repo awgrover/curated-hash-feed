@@ -6,10 +6,9 @@ use strict; use warnings;
 use feature 'switch';
 use feature 'say';
 use Data::Dumper;
-use lib qw(lib);
-use AutomaticPlanet::Config;
+my $conf = do 'conf/conf.pm';
 
-given($Config->{'dbi'}->[0]) {
+given($conf->{'dbi'}->[0]) {
     when(/^dbi:SQLite:/) {
         my ($filename) = $_ =~ /=(.+)/;
         exec("sqlite3 $filename");
