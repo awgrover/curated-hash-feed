@@ -1,4 +1,7 @@
 * Curate a hashtag
+** A web-site for setting up/reviewing our curated tag
+*** DONE bin/server not working yet
+*** template/index
 ** There is a hashtag we wish to curate to our own Curated X stream
 *** We need a twitter account for each hashtag
 **** It should be automatically created at some point.
@@ -59,3 +62,4 @@
 *** When retweeting, limit to n (10 at a time?)
 *** Notice if a twit has too many (10/day?)
 ** All these parameters are per-curation-stream
+** Add a page explaining how to get oauth key (link from "add")

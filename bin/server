@@ -6,8 +6,11 @@ BEGIN {
         carpout(LOG);
 }
 
+use lib qw(../awgPerl ../lib);
+
 package CurationTwitterStream;
 use base qw(WebApp::WebApp);
+
 use Memoize;
 
 memoize('config'); # for performance
@@ -33,6 +36,5 @@ sub setPageContext_general
         }
         
 # Go
-warn "Running";
 __PACKAGE__->new()->main();
 
