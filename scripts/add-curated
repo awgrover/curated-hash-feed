@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# --- twitter hashtag oauth secret 
+# --- twitter hashtag oauth secret oauth_token oauth_token_secret
 
 use strict; use warnings;
 
@@ -10,13 +10,13 @@ use lib qw(lib);
 use env;
 
 sub main {
-    if (@ARGV != 4) {
+    if (@ARGV != 6) {
         warn "Usage:\n";
         system("awk 'FNR==2,/^\$/ {print}' \"$0\"");
         exit 1;
         }
 
-    my %args; @args{qw(twitter_account hashtag oauth_key consumer_secret)} = @ARGV;
+    my %args; @args{qw(twitter_account hashtag oauth_key consumer_secret oauth_token oauth_token_secret)} = @ARGV;
     Model::CuratedFeed->create( \%args);
     }
 

@@ -1,0 +1,228 @@
+#!/usr/bin/env perl
+# --- twitter > followingers
+use strict; use warnings;
+
+use Net::OAuth;
+$Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
+use HTTP::Request::Common;
+use LWP::UserAgent;
+use URI::QueryParam;
+use Data::Dumper;
+use Carp qw( confess );
+$SIG{__DIE__} =  \&confess;
+use JSON;
+use feature qw(switch);
+use lib qw(lib);
+use env;
+use Schema;
+use Verbose;
+
+my $UserAgent = 'curated-tag-feed';
+
+=notes
+    request_url => 'https://api.twitter.com/oauth/request_token',
+    Access token URL: https://api.twitter.com/oauth/access_token
+    Authorize URL: https://api.twitter.com/oauth/authorize
+=cut
+
+sub main {
+    die "No curated-twitter given" if !$ARGV[0];
+    my $curated_feed = Model::CuratedFeed->find({ twitter_account => $ARGV[0]});
+
+    # FIXME we should cache this...
+    my $tweet_results = twitter_query(
+      $curated_feed,
+      'https://api.twitter.com/1/statuses/friends.json',
+      # user_id => $curated_feed->twitter_account, # causes authorization failure...
+      cursor => -1, # first page of results
+      include_entities => 'true',
+      );
+
+    die Dumper $tweet_results;
+
+    my $tweets = $tweet_results->{'results'};
+    warn "Tweets ".Dumper($tweets);
+    die;
+    # warn "Tweets so far ".@$tweets."\n";
+    my $screen_names = tweets_to_screen_names($tweets);
+    warn "screen names ".@$screen_names;
+
+    my $urls = urls($screen_names);
+    warn "Urls ".@$urls;
+    exit 1 if !@$urls;
+    print join("\n",@$urls)."\n";
+    }
+
+sub tweets_to_screen_names {
+  my ($tweets) = @_;
+
+  my %uniquify = map { ($_->{'from_user'}, undef) } @$tweets;
+  return [ keys %uniquify ];
+  }
+
+sub places_nearby {
+    my ($place) = @_;
+    my $data = twitter_query('https://api.twitter.com/1/geo/search.json', 
+        query => 'Baltimore, MD',
+        granularity => 'city',
+        );
+
+    my @places;
+    foreach my $p (@{ $data->{'result'}->{'places'} }) {
+        score($p, $place);
+        center_and_range($p);
+        push @places, $p; 
+
+        foreach my $contained (@{ $p->{'contained_within'} }) {
+            score($contained, $place);
+            center_and_range($contained);
+            push @places, $contained;
+            }
+        }
+
+    return [ reverse( sort { $a->{'_scores'} cmp $b->{'_scores'} } @places) ] ;
+    }
+
+sub center_and_range {
+    my ($geo_info) = @_;
+
+    my $convenience_name = $geo_info->{'id'}.", ".$geo_info->{'full_name'};
+
+    my $bt = $geo_info->{'bounding_box'}->{'type'};
+    if ($bt ne 'Polygon') {
+        warn "Bounding box not poly: ".$bt." for $convenience_name\n";
+        return;
+        }
+
+    my $coords = $geo_info->{'bounding_box'}->{'coordinates'};
+    if (@$coords != 1) {
+        warn "Bounding box coords != 1 (".@$coords.") for $convenience_name\n";
+        return;
+        }
+
+    my $c = $coords->[0];
+    # my ($top_left,$top_right,$bot_right,$bot_left) = @$c;
+    my ($ilat,$ilong) = (1,0);
+
+    my ($lat_center, $long_center);
+    $lat_center += $_->[$ilat] foreach @$c; 
+    $lat_center /= @$c;
+    $long_center += $_->[$ilong] foreach @$c; 
+    $long_center /= @$c;
+
+    $geo_info->{'bounding_box'}->{'_center'} = [$long_center, $lat_center];
+
+    my $r = 0;
+    foreach (@$c) {
+        my $an_r = sqrt((($_->[$ilat] - $lat_center) ** 2) + (($_->[$ilong] - $long_center) ** 2));
+        $r = $an_r if $r < $an_r;
+        }
+    }
+
+
+sub score {
+    my ($geo_info, $want_place) = @_;
+
+    # scores, most-significant to least
+    # as a string of digits, thus only 0..9
+    my $scores;
+
+    given ($geo_info->{'place_type'}) {
+        when ('poi') {
+            $scores .= '0';
+            }
+        when ([qw(city neighborhood)]) {
+            $scores .= '2';
+            }
+        default {
+            $scores .= '1';
+            }
+        }
+
+    given ($geo_info->{'full_name'}) {
+        when ($want_place) {
+            $scores .= '1';
+            }
+        default {
+            $scores .= '0';
+            }
+        }
+
+    # granularity
+    given ($geo_info->{'place_type'}) {
+        when ('neighborhood') {
+            $scores .= '2';
+            }
+        when ('city') {
+            $scores .= '1';
+            }
+        default {
+            $scores .= '0';
+            }
+        }
+
+    $geo_info->{'_scores'} = $scores;
+    }
+
+sub urls {
+    my ($screen_names) = @_;
+
+    my @urls;
+    while (@$screen_names > 0) {
+      my @hundred = splice @$screen_names, 0, 100;
+      my $data = twitter_query('https://api.twitter.com/1/users/lookup.json',
+          screen_name => join(",",@hundred),
+          );
+      push @urls, grep {$_ && $_ ne 'http://null'} map { $_->{'url'} } @$data;
+      }
+    return \@urls;
+    }
+
+sub twitter_query {
+    my ($feed, $request_url, %params) = @_;
+
+    # warn Dumper(Net::OAuth->request("protected resource")->all_params);
+    my $ua = LWP::UserAgent->new;
+    $ua->agent($ua->agent." ".$UserAgent);
+
+    my $nonce = join("",map {('a'..'z','0'..'1')[rand(36)]} (1..20));
+    vverbose 0,"OAuth info for ".$feed->twitter_account." ",Dumper($feed->oauth);
+    my $oauth = Net::OAuth->request("protected resource")->new(
+        %{$feed->oauth},
+        request_method => 'GET',
+        signature_method => 'HMAC-SHA1',
+        timestamp => time,
+        nonce => $nonce,
+        extra_params => \%params,
+        request_url => $request_url,
+        );
+    $oauth->sign;
+
+    my $uri = URI->new($oauth->normalized_request_url);
+    $uri->query_param($_ => $params{$_}) foreach keys %params;
+    vverbose 0,"Going to ask $uri (from $request_url)";
+    vverbose 0,"With auth header: ",$oauth->to_authorization_header;
+    my $req = HTTP::Request->new(GET => $uri, [ Authorization => $oauth->to_authorization_header ]);
+
+    my $res = $ua->request($req);
+
+    my $data =  eval { JSON->new->decode($res->content); };
+    if ($@) {
+      warn "INTERNAL JSON Decode failed: $@";
+      warn "Content in the http result:\n";
+      warn Dumper($res->content);
+      exit 1;
+      }
+
+    if ($res->is_success) {
+        return $data;
+        }
+    else {
+        # warn Dumper($res);
+        die "Something went wrong: ".$res->status_line.", ".$res->message,", ".$data->{'error'};
+      }
+
+    }
+
+main() if $0 eq __FILE__
+

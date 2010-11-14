@@ -48,6 +48,16 @@ __PACKAGE__->table("curated_feed");
   data_type: 'text'
   is_nullable: 0
 
+=head2 oauth_token
+
+  data_type: 'text'
+  is_nullable: 0
+
+=head2 oauth_token_secret
+
+  data_type: 'text'
+  is_nullable: 0
+
 =head2 created_at
 
   data_type: 'datetime'
@@ -73,6 +83,10 @@ __PACKAGE__->add_columns(
   { data_type => "text", is_nullable => 0 },
   "consumer_secret",
   { data_type => "text", is_nullable => 0 },
+  "oauth_token",
+  { data_type => "text", is_nullable => 0 },
+  "oauth_token_secret",
+  { data_type => "text", is_nullable => 0 },
   "created_at",
   {
     data_type     => "datetime",
@@ -89,10 +103,22 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("id");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07001 @ 2010-11-14 13:03:30
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:cA1BDPYkKK+i4Ta3qvRaOA
+# Created by DBIx::Class::Schema::Loader v0.07001 @ 2010-11-14 13:35:48
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:UKSsxno/L6poZKNL3LgDmw
 
 
-# You can replace this text with custom content, and it will be preserved on regeneration
+sub oauth {
+  my $self = shift;
+  {
+    consumer_key => $self->oauth_key,
+    consumer_secret => $self->consumer_secret,
+
+    # pick up from the point where you are working with an access token to make signed requests for Twitter resources.
+    account => $self->twitter_account,
+    token => $self->oauth_token, 
+    token_secret => $self->oauth_token_secret,
+  };
+  }
+        
 __PACKAGE__->meta->make_immutable;
 1;
