@@ -1,0 +1,54 @@
+#!/usr/bin/env perl
+# --- [port] # default port is 3100
+
+package MiniCGIWebServer;
+use base qw(HTTP::Server::Simple HTTP::Server::Simple::CGI::Environment);
+
+use strict; use warnings; no warnings 'uninitialized';
+use Data::Dumper;
+use File::Basename;
+
+use HTTP::Server::Simple;
+
+sub setup {
+    my $self=shift;
+    local %ENV=();
+    $self->setup_environment_from_metadata(@_);
+    $self->{'env'} = \%ENV;
+    warn "ENV: ",Dumper(\%ENV);
+    }
+
+sub handler {
+    my $self=shift;
+    warn "OMG: handler()";
+    warn "Handler ENV: ",Dumper($self->{'env'});
+    my @candidates = `find bin -type f -perm -u+x`;
+    if (@candidates == 0) {
+        warn "Nothing executable in bin/";
+        print "Nothing executable in bin/";
+        }
+    elsif (@candidates == 1) {
+        my $to_run = $candidates[0];
+        chomp $to_run;
+        my $dir = dirname($to_run);
+        my $bin = basename($to_run);
+        warn "Running $to_run";
+        system("ls -l $to_run");
+        system("cd $dir; ./$bin");
+        warn "Failed to run $to_run, $?" if $? != 0;
+        }
+    else {
+        die "More than one runnable";
+        }
+    }
+
+sub headers {
+    my $self=shift;
+
+    warn "Headers:\n".Dumper(@_);
+    }
+
+###
+
+my $server = MiniCGIWebServer->new($ARGV[0] || 3100);
+$server->run();

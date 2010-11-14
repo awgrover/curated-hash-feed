@@ -1,12 +1,12 @@
-#!/perl
+#!/usr/bin/env perl
 BEGIN {
         use CGI::Carp qw(carpout);
-        open(LOG, ">>error_log") or
+        open(LOG, ">>../logs/error_log") or
                 die("Unable to open error_log: $!\n");
         carpout(LOG);
 }
 
-Package CurationTwitterStream;
+package CurationTwitterStream;
 use base qw(WebApp::WebApp);
 use Memoize;
 
@@ -30,7 +30,9 @@ sub setPageContext_general
         
         # Put objects in the context: all requests
         # $self->pageContext->{'catalogRoot'} = CatalogRoot->new,
+        }
         
 # Go
+warn "Running";
 __PACKAGE__->new()->main();
 
