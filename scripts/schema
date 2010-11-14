@@ -8,7 +8,7 @@ use strict; use warnings; no warnings 'uninitialized';
 use feature 'switch';
 use feature 'say';
 use lib qw(lib);
-use AutomaticPlanet::Config;
+my $Config = do 'conf/conf.pm';
 
 given($ARGV[0]) {
 
@@ -99,13 +99,13 @@ sub capture_ddl {
 sub capture_model {
     require DBIx::Class::Schema::Loader;
     DBIx::Class::Schema::Loader::make_schema_at( 
-        'AutomaticPlanet::Schema', 
+        'Schema', 
         { 
             debug => 1,
             use_moose => 1,
-            result_base_class => 'AutomaticPlanet::Model',
+            result_base_class => 'Model',
             use_namespaces => 1,
-            result_namespace => '+AutomaticPlanet::Model',
+            result_namespace => '+Model',
             # default_resultset_class,
             dump_directory => 'lib',
             relationship_attrs => {
