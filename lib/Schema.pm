@@ -27,7 +27,6 @@ our $_conn;
 sub db {
   if (!$_conn) {
     $_conn = __PACKAGE__->connect(@{$Config->{'dbi'}});
-    warn "Sources: ",$_conn->sources;
     $_conn->storage->debug(1);
     $_conn->storage->debugfh(IO::File->new('>>log/debug'));
     }
