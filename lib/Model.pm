@@ -1,4 +1,4 @@
-package AutomaticPlanet::Model;
+package Model;
 # Enable the DBIx::ResultSet methods on the model
 # Convenience methods
 
@@ -21,12 +21,12 @@ sub transaction {
   # execute sub{} in a transaction
   my $class = shift;
   my ($fn) = @_;
-  AutomaticPlanet::Schema::db->txn_do($fn);
+  Schema::db->txn_do($fn);
   }
 
 sub txn_rollback {
   my $self = shift;
-  AutomaticPlanet::Schema::db->txn_rollback;
+  Schema::db->txn_rollback;
   }
 
 sub source_name {
@@ -38,7 +38,7 @@ sub source_name {
 
 sub _rs {
   my $class = shift;
-  AutomaticPlanet::Schema::db->resultset($class->source_name);
+  Schema::db->resultset($class->source_name);
   }
 
 sub AUTOLOAD {
@@ -49,7 +49,7 @@ sub AUTOLOAD {
   my ($method_name) = $AUTOLOAD =~ /([^:]+)$/;
   if (! ref $_[0]) {
     my ($class) = @_;
-    my $rs = AutomaticPlanet::Schema::db->resultset($class->source_name);
+    my $rs = Schema::db->resultset($class->source_name);
     if (1 || $rs->can($method_name)) { 
       # warn "found ".$_[0]." $method_name";
       # warn "will call on ".ref($rs);
@@ -65,10 +65,10 @@ sub AUTOLOAD {
     return $_[0]->$super_method_name(@_);
     use strict 'refs';
     };
-  if ($@ && $@ =~ /^(Can't locate object method "$method_name" via package "AutomaticPlanet::Model")/) {
+  if ($@ && $@ =~ /^(Can't locate object method "$method_name" via package "Model")/) {
     my $msg = $1;
     my $class = ref($_[0]) || $_[0];
-    $msg =~ s/"AutomaticPlanet::Model"/"$class"/;
+    $msg =~ s/"Model"/"$class"/;
     local $Carp::CarpLevel=1;
     confess $msg;
     }
