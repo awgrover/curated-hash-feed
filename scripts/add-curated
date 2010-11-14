@@ -1,0 +1,23 @@
+#!/usr/bin/env perl
+# --- twitter hashtag oauth secret 
+
+use strict; use warnings;
+
+use Data::Dumper;
+use Verbose;
+
+use lib qw(lib);
+use env;
+
+sub main {
+    if (@ARGV != 4) {
+        warn "Usage:\n";
+        system("awk 'FNR==2,/^\$/ {print}' \"$0\"");
+        exit 1;
+        }
+
+    my %args; @args{qw(twitter_account hashtag oauth_key consumer_secret)} = @ARGV;
+    Model::CuratedFeed->create( \%args);
+    }
+
+main();
