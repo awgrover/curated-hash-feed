@@ -33,7 +33,7 @@ sub main {
     my $tweet_results = twitter_query(
       $curated_feed,
       'https://api.twitter.com/1/statuses/friends.json',
-      # user_id => $curated_feed->twitter_account, # causes authorization failure...
+      screen_name => $curated_feed->twitter_account, # FIXME: the id, not name
       cursor => -1, # first page of results
       include_entities => 'true',
       );
