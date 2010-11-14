@@ -7,25 +7,39 @@ use base qw(HTTP::Server::Simple HTTP::Server::Simple::CGI::Environment);
 use strict; use warnings; no warnings 'uninitialized';
 use Data::Dumper;
 use File::Basename;
+use LWP::MediaTypes qw(guess_media_type);
+use IPC::Run;
+use Cwd;
 
-use HTTP::Server::Simple;
+# use HTTP::Server::Simple;
+use IO::File;
 
 sub setup {
     my $self=shift;
     local %ENV=();
     $self->setup_environment_from_metadata(@_);
     $self->{'env'} = \%ENV;
-    warn "ENV: ",Dumper(\%ENV);
     }
 
 sub handler {
     my $self=shift;
-    warn "OMG: handler()";
-    warn "Handler ENV: ",Dumper($self->{'env'});
+
+    my $static = "static".$self->{'env'}->{'PATH_INFO'};
+    if (-f $static) {
+        warn "Deliver static: $static";
+        print "HTTP/1.0 200 OK\r\n";
+        print "Content-Length: ".(-s $static)."\r\n";
+        print "Content-type: ".guess_media_type($static)."\r\n";
+        print "\r\n";
+        my $sh = IO::File->new("<$static") || die "Can't read $static: $!"; 
+        while (<$sh>) { print $_ };
+        return;
+        }
+
     my @candidates = `find bin -type f -perm -u+x`;
     if (@candidates == 0) {
         warn "Nothing executable in bin/";
-        print "Nothing executable in bin/";
+        print "Nothing executable in bin/\n";
         }
     elsif (@candidates == 1) {
         my $to_run = $candidates[0];
@@ -33,9 +47,52 @@ sub handler {
         my $dir = dirname($to_run);
         my $bin = basename($to_run);
         warn "Running $to_run";
-        system("ls -l $to_run");
-        system("cd $dir; ./$bin");
-        warn "Failed to run $to_run, $?" if $? != 0;
+
+        local %ENV = %{$self->{'env'}};
+
+        my $cgi_pid;
+        my $fh;
+        if (1 || exists $ENV{'CONTENT_LENGTH'}) {
+            warn "Content-length, passing to $bin";
+            my $from_browser = $self->stdin_handle();
+            my $was = cwd();
+            # *STDIN  = $self->stdin_handle();
+            # my $fdata = join("",<STDIN>);
+            sysread( STDIN, my $fdata, $ENV{'CONTENT_LENGTH'}  || 0);
+            warn "F: $fdata";
+            chdir $dir;
+            IPC::Run::run ["./$bin"], '<', \$fdata, '>pipe', \*CGI_OUT;
+            chdir $was;
+            # $cgi_pid = open2(\*CGI_OUT, '<&STDIN', "cd $dir; ./$bin");
+            $fh = \*CGI_OUT;
+            }
+        else {
+            warn "just read from $bin";
+            $fh = IO::File->new("cd $dir; ./$bin |");
+
+            if (!$fh) {
+                warn "Failed to run $to_run: $!";
+                return;
+                }
+            }
+
+        # collect headers, synthesize the HTTP line
+        my @headers;
+        my %status = ( 'Status:' => 200, 'Status-message:' => 'OK' );
+        while (<$fh>) { 
+            last if (/^$/);
+            if (/^(Status:|Status-message:) (.+)/) {
+                $status{$1} = $2;
+                next;
+                }
+            push @headers, $_;
+            };
+        print "HTTP/1.0 ".$status{'Status:'}." ".$status{'Status-message:'}."\r\n";
+        print @headers;
+
+        while (<$fh>) { print $_ };
+        $fh->close && warn "Failed to run $to_run; $?: $!";
+        waitpid($cgi_pid, 0) if $cgi_pid;
         }
     else {
         die "More than one runnable";
@@ -45,7 +102,10 @@ sub handler {
 sub headers {
     my $self=shift;
 
-    warn "Headers:\n".Dumper(@_);
+    local %ENV = %{$self->{'env'}};
+    $self->SUPER::headers(@_);
+    $self->{'env'} = {%ENV};
+    warn "Headers: ".Dumper(\%ENV);
     }
 
 ###
