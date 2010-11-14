@@ -33,6 +33,11 @@ __PACKAGE__->table("curated_feed");
   data_type: 'text'
   is_nullable: 0
 
+=head2 hashtag
+
+  data_type: 'text'
+  is_nullable: 0
+
 =head2 oauth_key
 
   data_type: 'text'
@@ -62,6 +67,8 @@ __PACKAGE__->add_columns(
   { data_type => "integer", is_auto_increment => 1, is_nullable => 0 },
   "twitter_account",
   { data_type => "text", is_nullable => 0 },
+  "hashtag",
+  { data_type => "text", is_nullable => 0 },
   "oauth_key",
   { data_type => "text", is_nullable => 0 },
   "consumer_secret",
@@ -82,8 +89,8 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("id");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07001 @ 2010-11-14 12:43:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ltM0prX8WhaNo2ydPmvOGQ
+# Created by DBIx::Class::Schema::Loader v0.07001 @ 2010-11-14 13:03:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:cA1BDPYkKK+i4Ta3qvRaOA
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration
