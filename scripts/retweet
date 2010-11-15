@@ -1,0 +1,45 @@
+#!/usr/bin/env perl
+# --- twitter last-search-id < tweet-ids
+# Retweet the tweets
+
+use strict; use warnings;
+
+use lib qw(lib);
+use Twitter_Util;
+use Verbose; $kVerbose = $ENV{'VERBOSE'} || 0;
+
+sub main {
+    die "No curated-twitter given" if !$ARGV[0];
+    my $curated_feed = Model::CuratedFeed->find({ twitter_account => shift @ARGV});
+    my $last_search_id = shift @ARGV; # also can be in stdin as ">id"
+
+    while (my $id = <>) {
+      chomp $id;
+      if ($id =~ /^>(\d+)$/) {
+        $last_search_id = $1;
+        last;
+        }
+      if (! $id =~ /^\d+$/) {
+        warn "Bad twitter id '$id' at data line $.\n";
+        next;
+        }
+
+      eval {
+        my $results = twitter_query(
+          $curated_feed,
+          POST => "https://api.twitter.com/1/statuses/retweet/$id.json",
+          trim_user => 't',
+          );
+        vverbose 4,"retweeted: ",Dumper($results);
+        };
+
+      # 403 means already tweeted
+      if ($@ && $@ !~ /403 Request failed:/) {
+        die $@;
+        }
+      $curated_feed->update({last_search_id => $id});
+      }
+    $curated_feed->update({last_search_id => $last_search_id});
+    }
+
+main() if $0 eq __FILE__
