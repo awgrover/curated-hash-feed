@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 # --- twitter > followingers
-use strict; use warnings;
+use strict; use warnings; no warnings 'uninitialized';
 
 use Net::OAuth;
 $Net::OAuth::PROTOCOL_VERSION = Net::OAuth::PROTOCOL_VERSION_1_0A;
@@ -37,7 +37,13 @@ my %Rate_Limit = (
 =cut
 
 sub twitter_query {
-    my ($feed, $request_url, %params) = @_;
+    my ($feed) = shift;
+    my $post;
+    if ($_[0] eq 'POST') {
+      $post = 'POST';
+      shift @_;
+      }
+    my ($request_url, %params) = @_;
 
     # warn Dumper(Net::OAuth->request("protected resource")->all_params);
     my $ua = LWP::UserAgent->new;
@@ -47,7 +53,7 @@ sub twitter_query {
     vverbose 4,"OAuth info for ".$feed->twitter_account." ",Dumper($feed->oauth);
     my $oauth = Net::OAuth->request("protected resource")->new(
         %{$feed->oauth},
-        request_method => 'GET',
+        request_method => $post || 'GET',
         signature_method => 'HMAC-SHA1',
         timestamp => time,
         nonce => $nonce,
@@ -57,16 +63,21 @@ sub twitter_query {
     $oauth->sign;
 
     my $uri = URI->new($oauth->normalized_request_url);
-    $uri->query_param($_ => $params{$_}) foreach keys %params;
-    vverbose 4,"Going to ask $uri (from $request_url)";
+    if (!$post) {
+      $uri->query_param($_ => $params{$_}) foreach keys %params;
+      }
+    vverbose 4,"Going to ",$post || 'GET'," $uri (from $request_url)";
     vverbose 4,"With auth header: ",$oauth->to_authorization_header;
-    my $req = HTTP::Request->new(GET => $uri, [ Authorization => $oauth->to_authorization_header ]);
+    my $req = $post
+      ? POST($uri, \%params, Authorization => $oauth->to_authorization_header)
+      : HTTP::Request->new(GET => $uri, [ Authorization => $oauth->to_authorization_header ])
+      ;
 
     my $res = $ua->request($req);
 
     # $feed->update_rate_limit($res->header('x-ratelimit-class') => $res->header('x-ratelimit-remaining'));
-    vverbose 0, "Rate limit: ",$res->header('x-ratelimit-class'),
-      " => ",$res->header('x-ratelimit-remaining'),"/",$res->header('x-ratelimit-limit');
+    warn "Rate limit: ",$res->header('x-ratelimit-class'),
+      " => ",$res->header('x-ratelimit-remaining'),"/",$res->header('x-ratelimit-limit'),"\n";
 
     if ($res->code eq '400') {
       warn "Headers ",Dumper($res->headers);
@@ -81,7 +92,7 @@ sub twitter_query {
       warn "INTERNAL JSON Decode failed: $@";
       warn "Content in the http result:\n";
       warn Dumper($res->content);
-      exit 1;
+      die "INTERNAL JSON Decode failed: $@";
       }
 
     if ($res->is_success) {
@@ -89,7 +100,7 @@ sub twitter_query {
       }
     else {
       # warn Dumper($res);
-      die "Something went wrong: ".$res->status_line.", ".$res->message,", ".$data->{'error'};
+      die $res->code." Request failed: ".$res->status_line.", ".$res->message,", ".$data->{'error'};
       }
 
     }

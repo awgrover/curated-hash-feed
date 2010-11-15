@@ -12,8 +12,7 @@ sub main {
     die "No curated-twitter given" if !$ARGV[0];
     my $curated_feed = Model::CuratedFeed->find({ twitter_account => $ARGV[0]});
 
-      verbose 0, "Find tweets for $_";
-      get_hash_tweets($curated_feed);
+    get_hash_tweets($curated_feed);
     }
 
 sub get_hash_tweets {
@@ -36,19 +35,18 @@ sub get_hash_tweets {
             ),
           );
 
-      warn Dumper($results);
-
       $next_page = $results->{'next_page'};
       $since_id = $results->{'max_id'}; # last
-      $curated_feed->update({last_search_id => $since_id});
 
       foreach (@{$results->{'results'}}) {
-        printf "@%s: %d %s\n",$_->{'from_user'},$_->{'id'},$_->{'text'};
+        printf STDERR "@%s: %d %s\n",$_->{'from_user'},$_->{'id'},$_->{'text'};
+        print $_->{'id'},"\n";
         }
 
       }
 
-    print "Last id? $since_id";
+    vverbose 4, "Last id? $since_id";
+    print ">$since_id\n";
     return $since_id;
     }
 
