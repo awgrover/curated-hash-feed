@@ -38,6 +38,11 @@ __PACKAGE__->table("curated_feed");
   data_type: 'text'
   is_nullable: 0
 
+=head2 last_search_id
+
+  data_type: 'text'
+  is_nullable: 1
+
 =head2 oauth_key
 
   data_type: 'text'
@@ -79,6 +84,8 @@ __PACKAGE__->add_columns(
   { data_type => "text", is_nullable => 0 },
   "hashtag",
   { data_type => "text", is_nullable => 0 },
+  "last_search_id",
+  { data_type => "text", is_nullable => 1 },
   "oauth_key",
   { data_type => "text", is_nullable => 0 },
   "consumer_secret",
@@ -103,8 +110,8 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("id");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07001 @ 2010-11-14 13:35:48
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:UKSsxno/L6poZKNL3LgDmw
+# Created by DBIx::Class::Schema::Loader v0.07001 @ 2010-11-15 08:56:33
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:8DS31V7js2RqATMPN3T73Q
 
 
 sub oauth {

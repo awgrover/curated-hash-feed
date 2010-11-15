@@ -18,6 +18,17 @@ use Schema;
 use Verbose; $kVerbose = $ENV{'VERBOSE'} || 0;
 
 my $UserAgent = 'curated-tag-feed';
+my %Rate_Limit = (
+  # as of 2010.11.04. http://dev.twitter.com/pages/rate-limiting#rest
+  # for GET, REST
+  # Rate limits will trigger status 400 (in REST)
+  OAuth => [350,'hour'], # per hour
+  Anonymous => [150,'hour'], # per hour per IP
+  # as of 2010.11.04. http://support.twitter.com/forums/10711/entries/15364
+  Updates => [1000, 'day'], # per day, retweets included, semi-hourly rate also imposed (unknown rate): wait for "several hours"
+  Following => [1000, 'day'], # per day, additional constraints at 2000 followings
+  # "Features", e.g. search, further limit the GET limits above
+  );
 
 =notes
     request_url => 'https://api.twitter.com/oauth/request_token',
@@ -53,7 +64,19 @@ sub twitter_query {
 
     my $res = $ua->request($req);
 
+    # $feed->update_rate_limit($res->header('x-ratelimit-class') => $res->header('x-ratelimit-remaining'));
+    vverbose 0, "Rate limit: ",$res->header('x-ratelimit-class'),
+      " => ",$res->header('x-ratelimit-remaining'),"/",$res->header('x-ratelimit-limit');
+
+    if ($res->code eq '400') {
+      warn "Headers ",Dumper($res->headers);
+      warn Dumper($res->content);
+      warn "Twitter rate limited, I think\n";
+      exit 1;
+      }
+
     my $data =  eval { JSON->new->decode($res->content); };
+
     if ($@) {
       warn "INTERNAL JSON Decode failed: $@";
       warn "Content in the http result:\n";
@@ -62,11 +85,11 @@ sub twitter_query {
       }
 
     if ($res->is_success) {
-        return $data;
-        }
+      return $data;
+      }
     else {
-        # warn Dumper($res);
-        die "Something went wrong: ".$res->status_line.", ".$res->message,", ".$data->{'error'};
+      # warn Dumper($res);
+      die "Something went wrong: ".$res->status_line.", ".$res->message,", ".$data->{'error'};
       }
 
     }
