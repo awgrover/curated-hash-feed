@@ -31,7 +31,7 @@ sub get_hash_tweets {
             q => '#'.$curated_feed->hashtag,
             rpp => 100,
             page => 1,
-            # since_id => $curated_feed->last_hash_search({ hashtag => $curated_feed->hashtag})
+            $curated_feed->last_search_id ? (since_id => $curated_feed->last_search_id) : (),
             result_type => 'recent',
             ),
           );
@@ -39,7 +39,8 @@ sub get_hash_tweets {
       warn Dumper($results);
 
       $next_page = $results->{'next_page'};
-      $since_id = $results->{'since_id'}; # last
+      $since_id = $results->{'max_id'}; # last
+      $curated_feed->update({last_search_id => $since_id});
 
       foreach (@{$results->{'results'}}) {
         printf "@%s: %d %s\n",$_->{'from_user'},$_->{'id'},$_->{'text'};
