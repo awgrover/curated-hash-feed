@@ -1,0 +1,54 @@
+#!/usr/bin/env perl
+# --- twitter < followingers
+# Retweet the tagged tweets
+
+use strict; use warnings;
+
+use lib qw(lib);
+use Twitter_Util;
+use Verbose; $kVerbose = $ENV{'VERBOSE'} || 0;
+
+sub main {
+    die "No curated-twitter given" if !$ARGV[0];
+    my $curated_feed = Model::CuratedFeed->find({ twitter_account => $ARGV[0]});
+
+      verbose 0, "Find tweets for $_";
+      get_hash_tweets($curated_feed);
+    }
+
+sub get_hash_tweets {
+    my ($curated_feed) = @_;
+
+    my ($next_page, $since_id) = (0, undef && $curated_feed->last_hash_search({ hashtag => $curated_feed->hashtag}));
+
+    while (defined $next_page) {
+      my $results = twitter_query(
+        $curated_feed,
+        'https://search.twitter.com/search.json'.($next_page ? $next_page : ''),
+        $next_page
+          ? ()
+          : (
+            q => '#'.$curated_feed->hashtag,
+            rpp => 100,
+            page => 1,
+            # since_id => $curated_feed->last_hash_search({ hashtag => $curated_feed->hashtag})
+            result_type => 'recent',
+            ),
+          );
+
+      warn Dumper($results);
+
+      $next_page = $results->{'next_page'};
+      $since_id = $results->{'since_id'}; # last
+
+      foreach (@{$results->{'results'}}) {
+        printf "@%s: %d %s\n",$_->{'from_user'},$_->{'id'},$_->{'text'};
+        }
+
+      }
+
+    print "Last id? $since_id";
+    return $since_id;
+    }
+
+main() if $0 eq __FILE__

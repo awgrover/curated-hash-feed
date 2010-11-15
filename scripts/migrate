@@ -1,0 +1,35 @@
+#!/usr/bin/env perl
+# --- theoretically: up|down migration-name
+
+use strict; use warnings; no warnings 'uninitialized';
+use lib qw(lib);
+use env;
+
+sub dbdo{
+    my ($statement) = shift;
+
+    my $args = \@_;
+
+    Schema::db->storage->dbh_do(sub{ my($s, $dbh) = @_;
+        my $rez = $dbh->do($statement, {}, @$args);
+        return $rez;
+        });
+    }
+
+sub update_models {
+    system('scripts/schema --models');
+    }
+
+sub main {
+    my $migration = $ARGV[0];
+    if (!$migration) {
+        warn "usage:\n";
+        system("awk 'FNR==2,/^\$/ {print}' \"$0\"");
+        exit 1;
+        }
+
+    Schema::db->storage->dbh->trace(0);
+    require "$migration";
+    }
+
+main();
