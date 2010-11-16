@@ -36,10 +36,10 @@ sub handler {
         return;
         }
 
-    my @candidates = `find bin -type f -perm -u+x`;
+    my @candidates = `find cgi -type f -perm -u+x`;
     if (@candidates == 0) {
-        warn "Nothing executable in bin/";
-        print "Nothing executable in bin/\n";
+        warn "Nothing executable in cgi/";
+        print "Nothing executable in cgi/\n";
         }
     elsif (@candidates == 1) {
         my $to_run = $candidates[0];
