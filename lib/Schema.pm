@@ -20,7 +20,7 @@ __PACKAGE__->load_namespaces(
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:0dP4fONt1YTNF3KY6GSKBA
 
 
-our $Config = do 'conf/conf.pm';
+our $Config = $MAIN::Config;
 
 our $_conn;
 

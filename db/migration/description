@@ -1,0 +1,35 @@
+dbdo <<EOS;
+CREATE TABLE xcurated_feed ( 
+    id INTEGER PRIMARY KEY NOT NULL, 
+    twitter_account text not null, 
+    hashtag text not null, 
+    description text not null,
+    last_search_id text,
+    oauth_token text,
+    oauth_token_secret,
+    -- move these out:
+    oauth_key text not null, 
+    consumer_secret text not null,
+    --
+    created_at datetime DEFAULT current_timestamp, 
+    updated_at datetime DEFAULT current_timestamp 
+    );
+EOS
+
+dbdo <<EOS;
+insert into xcurated_feed (id, description, twitter_account, hashtag, last_search_id, 
+    oauth_token, oauth_token_secret, 
+    oauth_key, consumer_secret, 
+    created_at, updated_at)
+select id, twitter_account, twitter_account, hashtag, last_search_id, 
+    oauth_token, oauth_token_secret, 
+    oauth_key, consumer_secret, 
+    created_at, updated_at from curated_feed
+;
+EOS
+
+dbdo "drop table curated_feed";
+dbdo "alter table xcurated_feed rename to curated_feed";
+
+update_models;
+1;

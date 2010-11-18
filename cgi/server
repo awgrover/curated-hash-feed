@@ -1,24 +1,41 @@
 #!/usr/bin/env perl
 BEGIN {
+        chdir "..";
         use CGI::Carp qw(carpout);
-        open(LOG, ">>../logs/error_log") or
-                die("Unable to open error_log: $!\n");
-        carpout(LOG);
+        if (-t STDERR) { # STDIN should probably not be tty
+          open(LOG, ">>logs/error_log") or
+                  die("Unable to open error_log: $!\n");
+          open(STDERR, ">&LOG") || die "couldn't dup STDERR: $!";
+          carpout(LOG);
+          }
+        print STDERR "\nStart\n";
+
+        $SIG{__DIE__} = sub { Carp::confess @_ };
 }
 
-use lib qw(../awgPerl ../lib);
+use lib qw(lib awgPerl);
 
 package CurationTwitterStream;
+use WebApp::WebApp; # compile errors won't show up otherwise
 use base qw(WebApp::WebApp);
 
 use Memoize;
+
+sub after_config {
+  warn "EVALING";
+  eval 'use Schema;';
+  warn "EVAL'D";
+  die $@ if $@;
+  warn "CONTINUE";
+  warn Dumper($MAIN::Config); use Data::Dumper;
+  }
 
 memoize('config'); # for performance
 sub config
         {
         my $self=shift;
         my $configFromFileAndOtherSetup = $self->SUPER::config;
-        return {
+        $MAIN::Config = {
                 %$configFromFileAndOtherSetup,
                 # imageUrl => $configFromFileAndOtherSetup->{'urlBase'}."/../bobsimages",
                 # moreInitialSlots=>andTheirValues,
@@ -32,9 +49,9 @@ sub setPageContext_general
         $self->SUPER::setPageContext_general();
         
         # Put objects in the context: all requests
-        # $self->pageContext->{'catalogRoot'} = CatalogRoot->new,
+        $self->pageContext->{'twitters'} = [Model::CuratedFeed->search->all];
         }
-        
+
 # Go
 __PACKAGE__->new()->main();
 
