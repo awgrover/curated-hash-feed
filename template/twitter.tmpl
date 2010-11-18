@@ -9,14 +9,22 @@
 <body>
     {{if $error}}<div class="status_message">{{$error}}</div>{{/if}}
 
-    <table>
+    <table border="1">
+      <tr>
+        <th>Twitter Account</th>
+        <th>Hash Tag</th>
+        <th>Description</th>
+        <th></th>
+      </tr>
       {{iterate $twitters $twit}}
         <tr>
-          <td>x</td>
           <td>{{$twit.twitter_account}}</td>
+          <td>{{$twit.hashtag}}</td>
+          <td>{{$twit.description}}</td>
           <td>
             <form method="POST">
-                <input type="hidden" name="op" value="OAuthDance" /><input type="submit" value="Get OAuth Token" />
+                <input type="hidden" name="op" value="OAuthDance({{$twit.id}})" /><input type="submit" value="Get OAuth Token" />
+                {{if $twit.oauth_token}}(has one){{/if}}
             </form>
           </td>
         </tr>
