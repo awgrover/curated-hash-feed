@@ -38,9 +38,24 @@ __PACKAGE__->table("curated_feed");
   data_type: 'text'
   is_nullable: 0
 
+=head2 description
+
+  data_type: 'text'
+  is_nullable: 0
+
 =head2 last_search_id
 
   data_type: 'text'
+  is_nullable: 1
+
+=head2 oauth_token
+
+  data_type: 'text'
+  is_nullable: 1
+
+=head2 oauth_token_secret
+
+  data_type: (empty string)
   is_nullable: 1
 
 =head2 oauth_key
@@ -49,16 +64,6 @@ __PACKAGE__->table("curated_feed");
   is_nullable: 0
 
 =head2 consumer_secret
-
-  data_type: 'text'
-  is_nullable: 0
-
-=head2 oauth_token
-
-  data_type: 'text'
-  is_nullable: 0
-
-=head2 oauth_token_secret
 
   data_type: 'text'
   is_nullable: 0
@@ -84,15 +89,17 @@ __PACKAGE__->add_columns(
   { data_type => "text", is_nullable => 0 },
   "hashtag",
   { data_type => "text", is_nullable => 0 },
+  "description",
+  { data_type => "text", is_nullable => 0 },
   "last_search_id",
   { data_type => "text", is_nullable => 1 },
+  "oauth_token",
+  { data_type => "text", is_nullable => 1 },
+  "oauth_token_secret",
+  { data_type => "", is_nullable => 1 },
   "oauth_key",
   { data_type => "text", is_nullable => 0 },
   "consumer_secret",
-  { data_type => "text", is_nullable => 0 },
-  "oauth_token",
-  { data_type => "text", is_nullable => 0 },
-  "oauth_token_secret",
   { data_type => "text", is_nullable => 0 },
   "created_at",
   {
@@ -110,8 +117,8 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("id");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07001 @ 2010-11-15 08:56:33
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:8DS31V7js2RqATMPN3T73Q
+# Created by DBIx::Class::Schema::Loader v0.07001 @ 2010-11-18 15:28:49
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ViBvOWYeSG4qJixEEUF9+w
 
 
 sub oauth {

@@ -1,0 +1,27 @@
+<html>
+<head>
+    <link href="/stylesheets/base.css" media="all" rel="stylesheet" type="text/css" />
+
+    <title>
+        Curated Twitter Hashtag Stream
+    </title>
+</head>
+<body>
+    {{if $error}}<div class="status_message">{{$error}}</div>{{/if}}
+    {{if $curatedFeed}}
+        <h1>Created {{$curatedFeed.twitter_account}}</h1>
+        <hr />
+    {{/if}}
+    <h1>Add curated hashtag stream</h1>
+    <form method="POST" class="table_form">
+        <input type="hidden" name="op" value="CuratedFeed.add" />
+        <label>Curated Twitter Account<input name="twitter_account" type="text" size="40" />&lt;live-search-here&gt;</label>
+        <label>Hash Tag<input name="hashtag" type="text" size="60" /></label>
+        <label>Description<input name="description" type="text" size="40" /></label>
+        <hr />
+        <div>Optional:</div>
+        <label>OAuth API key<input name="oauth_key" type="text" size="60" /></label>
+        <input type="submit" name="" value="Add" />
+    </form>
+</body>
+</html>

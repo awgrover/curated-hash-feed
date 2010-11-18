@@ -53,17 +53,13 @@ sub handler {
         my $cgi_pid;
         my $fh;
         if (1 || exists $ENV{'CONTENT_LENGTH'}) {
-            warn "Content-length, passing to $bin";
+            # You like this? Attaching the "real" stidin (the browser submit) to the "real" cgi
             my $from_browser = $self->stdin_handle();
             my $was = cwd();
-            # *STDIN  = $self->stdin_handle();
-            # my $fdata = join("",<STDIN>);
             sysread( STDIN, my $fdata, $ENV{'CONTENT_LENGTH'}  || 0);
-            warn "F: $fdata";
             chdir $dir;
             IPC::Run::run ["./$bin"], '<', \$fdata, '>pipe', \*CGI_OUT;
             chdir $was;
-            # $cgi_pid = open2(\*CGI_OUT, '<&STDIN', "cd $dir; ./$bin");
             $fh = \*CGI_OUT;
             }
         else {
@@ -105,7 +101,6 @@ sub headers {
     local %ENV = %{$self->{'env'}};
     $self->SUPER::headers(@_);
     $self->{'env'} = {%ENV};
-    warn "Headers: ".Dumper(\%ENV);
     }
 
 ###
