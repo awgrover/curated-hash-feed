@@ -15,7 +15,7 @@ use feature qw(switch);
 use lib qw(lib);
 use env;
 use Schema;
-use Verbose; $kVerbose = $ENV{'VERBOSE'} || 0;
+use Verbose; $kVerbose = $ENV{'VERBOSE'} || 4;
 
 my $UserAgent = 'curated-tag-feed';
 my %Rate_Limit = (
@@ -37,22 +37,26 @@ my %Rate_Limit = (
 =cut
 
 sub twitter_query {
-    my ($feed) = shift;
+    # ---  \%oauth_keys, [POST] url [oauthtype=>x,] k=>v
+    my ($oauth_keys) = shift;
     my $post;
     if ($_[0] eq 'POST') {
       $post = 'POST';
       shift @_;
       }
     my ($request_url, %params) = @_;
+    my $oauth_type = (delete $params{'oauthtype'}) || 'protected resource';
+    my $callback = delete $params{'callback'};
 
-    # warn Dumper(Net::OAuth->request("protected resource")->all_params);
+    # warn Dumper(Net::OAuth->request($oauth_type)->all_params);
     my $ua = LWP::UserAgent->new;
     $ua->agent($ua->agent." ".$UserAgent);
 
     my $nonce = join("",map {('a'..'z','0'..'1')[rand(36)]} (1..20));
-    vverbose 4,"OAuth info for ".$feed->twitter_account." ",Dumper($feed->oauth);
-    my $oauth = Net::OAuth->request("protected resource")->new(
-        %{$feed->oauth},
+    vverbose 4,"OAuth info for ".$oauth_keys->{'account'}." ",Dumper($oauth_keys);
+    my $oauth = Net::OAuth->request($oauth_type)->new(
+        %$oauth_keys,
+        ($callback ? (callback => $callback) : ()),
         request_method => $post || 'GET',
         signature_method => 'HMAC-SHA1',
         timestamp => time,
@@ -73,11 +77,10 @@ sub twitter_query {
       : HTTP::Request->new(GET => $uri, [ Authorization => $oauth->to_authorization_header ])
       ;
 
-    my $res = $ua->request($req);
+    my $res = $ua->simple_request($req);
+    vverbose 4,"Result Status: ",$res->code;
 
     # $feed->update_rate_limit($res->header('x-ratelimit-class') => $res->header('x-ratelimit-remaining'));
-    warn "Rate limit: ",$res->header('x-ratelimit-class'),
-      " => ",$res->header('x-ratelimit-remaining'),"/",$res->header('x-ratelimit-limit'),"\n";
 
     if ($res->code eq '400') {
       warn "Headers ",Dumper($res->headers);
@@ -86,13 +89,30 @@ sub twitter_query {
       exit 1;
       }
 
-    my $data =  eval { JSON->new->decode($res->content); };
+    vverbose 0, "Rate limit: ",$res->header('x-ratelimit-class'),
+      " => ",$res->header('x-ratelimit-remaining'),"/",$res->header('x-ratelimit-limit'),"\n";
 
-    if ($@) {
-      warn "INTERNAL JSON Decode failed: $@";
-      warn "Content in the http result:\n";
+    if ($res->code eq '401') {
+      warn "Headers ",Dumper($res->headers);
       warn Dumper($res->content);
-      die "INTERNAL JSON Decode failed: $@";
+      warn "Twitter Doesn't like that, I think\n";
+      die $res->code." Request failed: ".$res->status_line.", ".$res->message;
+      }
+
+    my $data;
+
+    if ($uri =~ /\.js$/) {
+      $data =  eval { JSON->new->decode($res->content); };
+
+      if ($@) {
+        warn "INTERNAL JSON Decode failed: $@";
+        warn "Content in the http result:\n";
+        warn Dumper($res->content);
+        die "INTERNAL JSON Decode failed: $@";
+        }
+      }
+    else {
+      $data = $res->content;
       }
 
     if ($res->is_success) {
@@ -105,6 +125,21 @@ sub twitter_query {
 
     }
 
+sub oauth_simple {
+  my %args = @_;
+  vverbose 0,"ARgs ",Dumper(\%args)," ";
+  my @tokens = qw(consumer_key consumer_secret);
+  my %tokens; @tokens{@tokens} = @args{@tokens};
+  Net::OAuth::Simple->new(
+    protocol_version => '1.0a',
+    urls => {
+      authorization_url => "https://api.twitter.com/oauth/authorize",
+      request_token_url => "https://api.twitter.com/oauth/request_token",
+      access_token_url => "https://api.twitter.com/oauth/access_token",
+      },
+    tokens => \%tokens,
+    );
+  }
 1;
 
 
