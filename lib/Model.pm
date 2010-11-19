@@ -5,6 +5,8 @@ package Model;
 use strict;
 use warnings;
 
+use Net::OAuth::Simple;
+
 use Moose;
 use MooseX::NonMoose;
 # use namespace::autoclean; breaks overload
@@ -16,6 +18,8 @@ __PACKAGE__->load_components(qw/InflateColumn::DateTime/);
 use Carp;
 
 our $AUTOLOAD;
+
+use overload cmp => sub { $_[0]->id <=> $_[1]->id; };
 
 sub transaction {
   # execute sub{} in a transaction

@@ -87,7 +87,7 @@ sub handler {
         print @headers;
 
         while (<$fh>) { print $_ };
-        $fh->close && warn "Failed to run $to_run; $?: $!";
+        $fh->close || warn "Failed to run $to_run; $?: $!";
         waitpid($cgi_pid, 0) if $cgi_pid;
         }
     else {

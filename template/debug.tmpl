@@ -1,0 +1,48 @@
+<html>
+<head>
+    <link href="/stylesheets/base.css" media="all" rel="stylesheet" type="text/css" />
+
+    <title>
+        Curated Twitter Hashtag Stream
+    </title>
+</head>
+<body>
+    {{if $error}}<div class="status_message">{{$error}}</div>{{/if}}
+
+    <table border="1" class="debug_datapool">
+      <tr>
+        <th>Key</th>
+        <th>Value</th>
+      </tr>
+      {{iterate $keys.sort $k}}
+        <tr>
+          <td>{{$k}}</td>
+          <td>
+            {{if ${{$k}}.count}}
+                <table border="0">
+                    {{iterate ${{$k}}.sort $v}}
+                      <tr>
+                        <td>{{$v_index}}: {{$v}}</td>
+                      </tr>
+                    {{/iterate}}
+                </table>
+
+            {{else}}
+                {{if ${{$k}}.keys}}
+                    <table border="1">
+                        {{iterate ${{$k}}.keys $subk}}
+                          <tr>
+                            <td>{{$subk}}</td><td>{{${{$k}}.{{$subk}}}}</td>
+                          </tr>
+                        {{/iterate}}
+                    </table>
+                {{else}}
+                    {{${{$k}}}}
+                {{/if}}
+            {{/if}}
+          </td>
+        </tr>
+      {{/iterate}}
+    </table>
+</body>
+</html>

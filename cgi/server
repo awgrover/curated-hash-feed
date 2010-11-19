@@ -49,9 +49,19 @@ sub setPageContext_general
         $self->SUPER::setPageContext_general();
         
         # Put objects in the context: all requests
-        $self->pageContext->{'twitters'} = [Model::CuratedFeed->search->all];
+        my $pg = $self->pageContext;
+
+        $pg->{'session'} = $self->session->param;
+        $pg->{'ENV'} = \%ENV;
+
+        $pg->{'twitters'} = [Model::CuratedFeed->search->all];
         }
 
+
+sub display {
+  my $self=shift;
+  # $self->session->param(example => "bob");
+  $self->SUPER::display(@_);
+  }
 # Go
 __PACKAGE__->new()->main();
-
