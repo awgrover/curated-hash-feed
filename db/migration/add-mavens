@@ -1,0 +1,12 @@
+dbdo <<EOS;
+CREATE TABLE mavens ( 
+    id INTEGER PRIMARY KEY NOT NULL, 
+    curated_feed_id integer REFERENCES curated_feed(id) NOT NULL,
+    twitter_account text not null, 
+    created_at datetime DEFAULT current_timestamp, 
+    updated_at datetime DEFAULT current_timestamp 
+    );
+EOS
+
+update_models;
+1;

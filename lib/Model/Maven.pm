@@ -1,4 +1,4 @@
-package Model::CuratedFeed;
+package Model::Maven;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
@@ -14,11 +14,11 @@ extends 'Model';
 
 =head1 NAME
 
-Model::CuratedFeed
+Model::Maven
 
 =cut
 
-__PACKAGE__->table("curated_feed");
+__PACKAGE__->table("mavens");
 
 =head1 ACCESSORS
 
@@ -28,35 +28,16 @@ __PACKAGE__->table("curated_feed");
   is_auto_increment: 1
   is_nullable: 0
 
+=head2 curated_feed_id
+
+  data_type: 'integer'
+  is_foreign_key: 1
+  is_nullable: 0
+
 =head2 twitter_account
 
   data_type: 'text'
   is_nullable: 0
-
-=head2 hashtag
-
-  data_type: 'text'
-  is_nullable: 0
-
-=head2 description
-
-  data_type: 'text'
-  is_nullable: 0
-
-=head2 last_search_id
-
-  data_type: 'text'
-  is_nullable: 1
-
-=head2 oauth_token
-
-  data_type: 'text'
-  is_nullable: 1
-
-=head2 oauth_token_secret
-
-  data_type: (empty string)
-  is_nullable: 1
 
 =head2 created_at
 
@@ -75,18 +56,10 @@ __PACKAGE__->table("curated_feed");
 __PACKAGE__->add_columns(
   "id",
   { data_type => "integer", is_auto_increment => 1, is_nullable => 0 },
+  "curated_feed_id",
+  { data_type => "integer", is_foreign_key => 1, is_nullable => 0 },
   "twitter_account",
   { data_type => "text", is_nullable => 0 },
-  "hashtag",
-  { data_type => "text", is_nullable => 0 },
-  "description",
-  { data_type => "text", is_nullable => 0 },
-  "last_search_id",
-  { data_type => "text", is_nullable => 1 },
-  "oauth_token",
-  { data_type => "text", is_nullable => 1 },
-  "oauth_token_secret",
-  { data_type => "", is_nullable => 1 },
   "created_at",
   {
     data_type     => "datetime",
@@ -104,34 +77,26 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 mavens
+=head2 curated_feed
 
-Type: has_many
+Type: belongs_to
 
-Related object: L<Model::Maven>
+Related object: L<Model::CuratedFeed>
 
 =cut
 
-__PACKAGE__->has_many(
-  "mavens",
-  "Model::Maven",
-  { "foreign.curated_feed_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 1 },
+__PACKAGE__->belongs_to(
+  "curated_feed",
+  "Model::CuratedFeed",
+  { id => "curated_feed_id" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "CASCADE" },
 );
 
 
 # Created by DBIx::Class::Schema::Loader v0.07001 @ 2010-11-21 12:10:18
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:tPH4yK4YkuVD5/9360zjMA
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WTnUlCwVdI11z2rcKPwMpg
 
 
-sub oauth {
-  my $self = shift;
-  {
-    account => $self->twitter_account,
-    token => $self->oauth_token, 
-    token_secret => $self->oauth_token_secret,
-  };
-  }
-        
+# You can replace this text with custom content, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;
 1;
