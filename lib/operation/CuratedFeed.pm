@@ -11,7 +11,7 @@ sub do_add {
   my @allowed = qw(hashtag twitter_account description oauth_key);
   my %allowed; @allowed{@allowed} = @$args{@allowed};
   foreach (qw(consumer_secret oauth_key)) {
-    $allowed{$_} = $MAIN::Config->{'oauth'}->{$_};
+    $allowed{$_} = $self->webApp->config->{'oauth'}->{$_};
     }
   vverbose 0,"Allowed: ".Dumper(\%allowed);
   $self->webApp->pageContext->{'curatedFeed'} = Model::CuratedFeed->create(\%allowed);

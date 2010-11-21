@@ -4,6 +4,6 @@ dbi => # dbi connect args
             dbi_init => [ 'PRAGMA foreign_keys = ON;' ],
 oauth => {
   consumer_secret => 'HjmcbcFccPpKKlunlQU6FTGmB6v7LDPBWeJH3CNg',
-  oauth_key => 'T60gIMzI1YE6RK71kef3g',
+  consumer_key => 'T60gIMzI1YE6RK71kef3g',
   },
 }

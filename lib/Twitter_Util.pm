@@ -15,7 +15,7 @@ use feature qw(switch);
 use lib qw(lib);
 use env;
 use Schema;
-use Verbose; $kVerbose = $ENV{'VERBOSE'} || 4;
+use Verbose; $kVerbose = $ENV{'VERBOSE'} || 0;
 
 my $UserAgent = 'curated-tag-feed';
 my %Rate_Limit = (
@@ -101,7 +101,8 @@ sub twitter_query {
 
     my $data;
 
-    if ($uri =~ /\.js$/) {
+    vverbose 0,"###### uri: ",$uri->path;
+    if ($uri->path =~ /\.json$/) {
       $data =  eval { JSON->new->decode($res->content); };
 
       if ($@) {

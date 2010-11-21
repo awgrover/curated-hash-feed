@@ -19,8 +19,7 @@ __PACKAGE__->load_namespaces(
 # Created by DBIx::Class::Schema::Loader v0.07001 @ 2010-11-14 12:43:36
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:0dP4fONt1YTNF3KY6GSKBA
 
-
-our $Config = $MAIN::Config;
+our $Config = $main::Config;
 
 our $_conn;
 
