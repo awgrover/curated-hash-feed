@@ -89,6 +89,7 @@ sub twitter_query {
       exit 1;
       }
 
+    vverbose 0, "uri: ",$uri->path;
     vverbose 0, "Rate limit: ",$res->header('x-ratelimit-class'),
       " => ",$res->header('x-ratelimit-remaining'),"/",$res->header('x-ratelimit-limit'),"\n";
 
@@ -101,7 +102,6 @@ sub twitter_query {
 
     my $data;
 
-    vverbose 0,"###### uri: ",$uri->path;
     if ($uri->path =~ /\.json$/) {
       $data =  eval { JSON->new->decode($res->content); };
 
