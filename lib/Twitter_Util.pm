@@ -15,7 +15,7 @@ use feature qw(switch);
 use lib qw(lib);
 use env;
 use Schema;
-use Verbose; $kVerbose = $ENV{'VERBOSE'} || 0;
+use Verbose; $kVerbose = $ENV{'VERBOSE'} || 4;
 
 my $UserAgent = 'curated-tag-feed';
 my %Rate_Limit = (
@@ -116,6 +116,7 @@ sub twitter_query {
       $data = $res->content;
       }
 
+    vverbose 0,"Data: ",Dumper($data);
     if ($res->is_success) {
       return $data;
       }
