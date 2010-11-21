@@ -19,6 +19,7 @@ sub main {
 sub get_hash_tweets {
     my ($curated_feed) = @_;
 
+    my %mavens = map {(lc($_->twitter_account) => undef)} $curated_feed->mavens;
     my ($next_page, $since_id) = (0, undef && $curated_feed->last_hash_search({ hashtag => $curated_feed->hashtag}));
 
     while (defined $next_page) {
@@ -37,10 +38,13 @@ sub get_hash_tweets {
             ),
           );
 
+      vverbose 2,"Search got ".@{$results->{'results'}};
       $next_page = $results->{'next_page'};
       $since_id = $results->{'max_id'}; # last
 
       foreach (@{$results->{'results'}}) {
+        vverbose 4,"Candidate: ",$_->{'from_user'}," : ",$_->{'text'};
+        next unless exists($mavens{lc($_->{'from_user'})});
         printf STDERR "@%s: %d %s\n",$_->{'from_user'},$_->{'id'},$_->{'text'};
         print $_->{'id'},"\n";
         }
