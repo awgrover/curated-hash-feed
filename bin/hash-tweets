@@ -5,6 +5,7 @@
 use strict; use warnings;
 
 use lib qw(lib);
+use env;
 use Twitter_Util;
 use Verbose; $kVerbose = $ENV{'VERBOSE'} || 0;
 
@@ -22,7 +23,7 @@ sub get_hash_tweets {
 
     while (defined $next_page) {
       my $results = twitter_query(
-        $curated_feed,
+        {%{$main::Config->{'oauth'}}, %{$curated_feed->oauth}},
         'https://search.twitter.com/search.json'.($next_page ? $next_page : ''),
         $next_page
           ? ()

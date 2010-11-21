@@ -8,6 +8,7 @@
 </head>
 <body>
     {{if $error}}<div class="status_message">{{$error}}</div>{{/if}}
+    {{if $info}}<div class="status_message">{{$info}}</div>{{/if}}
 
     <table border="1">
       <tr>
@@ -24,6 +25,7 @@
           <td>
             <form method="POST">
                 <input type="hidden" name="op" value="OAuthDance({{$twit.id}})" /><input type="submit" value="Get OAuth Token" />
+                <input type="hidden" name="redirect" value='https://api.twitter.com/oauth/authorize' />
                 {{if $twit.oauth_token}}(has one){{/if}}
             </form>
           </td>

@@ -27,7 +27,7 @@ sub after_config {
   warn "EVAL'D";
   die $@ if $@;
   warn "CONTINUE";
-  warn Dumper($MAIN::Config); use Data::Dumper;
+  warn Dumper($main::Config); use Data::Dumper;
   }
 
 memoize('config'); # for performance
@@ -35,7 +35,7 @@ sub config
         {
         my $self=shift;
         my $configFromFileAndOtherSetup = $self->SUPER::config;
-        $MAIN::Config = {
+        $main::Config = {
                 %$configFromFileAndOtherSetup,
                 # imageUrl => $configFromFileAndOtherSetup->{'urlBase'}."/../bobsimages",
                 # moreInitialSlots=>andTheirValues,
