@@ -38,6 +38,7 @@ my %Rate_Limit = (
 
 sub twitter_query {
     # ---  \%oauth_keys, [POST] url [oauthtype=>x,] k=>v
+    # leave oauth_keys as undef to do an unauthenticated request: e.g. search
     my ($oauth_keys) = shift;
     my $post;
     if ($_[0] eq 'POST') {
@@ -45,36 +46,45 @@ sub twitter_query {
       shift @_;
       }
     my ($request_url, %params) = @_;
-    my $oauth_type = (delete $params{'oauthtype'}) || 'protected resource';
-    my $callback = delete $params{'callback'};
 
-    # warn Dumper(Net::OAuth->request($oauth_type)->all_params);
+    my ($uri, $oauth);
     my $ua = LWP::UserAgent->new;
     $ua->agent($ua->agent." ".$UserAgent);
 
-    my $nonce = join("",map {('a'..'z','0'..'1')[rand(36)]} (1..20));
-    vverbose 4,"OAuth info for ".$oauth_keys->{'account'}." ",Dumper($oauth_keys);
-    my $oauth = Net::OAuth->request($oauth_type)->new(
-        %$oauth_keys,
-        ($callback ? (callback => $callback) : ()),
-        request_method => $post || 'GET',
-        signature_method => 'HMAC-SHA1',
-        timestamp => time,
-        nonce => $nonce,
-        extra_params => \%params,
-        request_url => $request_url,
-        );
-    $oauth->sign;
+    if ($oauth_keys) {
+      my $oauth_type = (delete $params{'oauthtype'}) || 'protected resource';
+      my $callback = delete $params{'callback'};
 
-    my $uri = URI->new($oauth->normalized_request_url);
+      # warn Dumper(Net::OAuth->request($oauth_type)->all_params);
+
+      my $nonce = join("",map {('a'..'z','0'..'1')[rand(36)]} (1..20));
+      vverbose 4,"OAuth info for ".$oauth_keys->{'account'}." ",Dumper($oauth_keys);
+      $oauth = Net::OAuth->request($oauth_type)->new(
+          %$oauth_keys,
+          ($callback ? (callback => $callback) : ()),
+          request_method => $post || 'GET',
+          signature_method => 'HMAC-SHA1',
+          timestamp => time,
+          nonce => $nonce,
+          extra_params => \%params,
+          request_url => $request_url,
+          );
+      $oauth->sign;
+
+      $uri = URI->new($oauth->normalized_request_url);
+      }
+    else {
+      $uri = URI->new($request_url);
+      }
+
     if (!$post) {
       $uri->query_param($_ => $params{$_}) foreach keys %params;
       }
     vverbose 4,"Going to ",$post || 'GET'," $uri (from $request_url)";
-    vverbose 4,"With auth header: ",$oauth->to_authorization_header;
+    vverbose 4,"With auth header: ",$oauth->to_authorization_header if $oauth;
     my $req = $post
-      ? POST($uri, \%params, Authorization => $oauth->to_authorization_header)
-      : HTTP::Request->new(GET => $uri, [ Authorization => $oauth->to_authorization_header ])
+      ? POST($uri, \%params, $oauth ? (Authorization => $oauth->to_authorization_header) : ())
+      : HTTP::Request->new(GET => $uri, $oauth ? [ Authorization => $oauth->to_authorization_header ] : [])
       ;
 
     my $res = $ua->simple_request($req);

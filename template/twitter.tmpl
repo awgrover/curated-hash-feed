@@ -15,18 +15,19 @@
         <th>Twitter Account</th>
         <th>Hash Tag</th>
         <th>Description</th>
-        <th></th>
+        <th>Mavens</td>
+        <th>Grant Access</th>
       </tr>
       {{iterate $twitters $twit}}
         <tr>
           <td>{{$twit.twitter_account}}</td>
           <td>{{$twit.hashtag}}</td>
           <td>{{$twit.description}}</td>
+          <td><a href="/twitter/mavens?id={{$twit.id}}">mavens ({{$twit.mavens.count}})</a></td>
           <td>
             <form method="POST">
-                <input type="hidden" name="op" value="OAuthDance({{$twit.id}})" /><input type="submit" value="Get OAuth Token" />
-                <input type="hidden" name="redirect" value='https://api.twitter.com/oauth/authorize' />
-                {{if $twit.oauth_token}}(has one){{/if}}
+                {{if $twit.oauth_token}}(already did it){{/if}}
+                <input type="hidden" name="op" value="OAuthDance({{$twit.id}})" /><input type="submit" value="{{if $twit.oauth_token}}Dance Again{{else}}Do the Dance{{/if}}" />
             </form>
           </td>
         </tr>

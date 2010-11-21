@@ -24,6 +24,7 @@ sub get_hash_tweets {
     while (defined $next_page) {
       my $results = twitter_query(
         {%{$main::Config->{'oauth'}}, %{$curated_feed->oauth}},
+        # undef,
         'https://search.twitter.com/search.json'.($next_page ? $next_page : ''),
         $next_page
           ? ()
