@@ -59,7 +59,7 @@ sub do_get_requestToken {
       token => $params->{'oauth_token'},
       token_secret =>  $cf->oauth_token_secret,
     },
-    POST => 'https://api.twitter.com/oauth/access_token', # NOT JSON
+    'https://api.twitter.com/oauth/access_token', # NOT JSON
     oauthtype => 'access token',
     );
 
@@ -67,10 +67,16 @@ sub do_get_requestToken {
   $uri->query($rez);
   my %request_token = $uri->query_form;
 
-  vverbose 0,"params ",Dumper($params);
+  vverbose 0,"rez ",Dumper(\%request_token);
+
+  if (lc($cf->twitter_account) ne lc($request_token{'screen_name'})) {
+    $self->error("Authenticated the wrong twitter account, got ",$request_token{'screen_name'},", expected ",$cf->twitter_account);
+    return undef;
+    }
 
   $cf->update({
-    oauth_token => $params->{'oauth_token'},
+    oauth_token => $request_token{'oauth_token'},
+    oauth_token_secret => $request_token{'oauth_token_secret'},
     });
  
    $self->webApp->pageContext->{'info'} = "Authenticated ".$cf->{'twitter_account'};
