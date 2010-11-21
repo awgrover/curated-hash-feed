@@ -24,7 +24,12 @@ sub setup {
 sub handler {
     my $self=shift;
 
-    my $static = "static".$self->{'env'}->{'PATH_INFO'};
+    my $path = $self->{'env'}->{'PATH_INFO'};
+    warn "path: $path";
+    warn "at? ",(-f "static/About.html");
+    $path = "/index.html" if ($path eq '/') && -f "static/index.html";
+
+    my $static = "static".$path;
     if (-f $static) {
         warn "Deliver static: $static";
         print "HTTP/1.0 200 OK\r\n";
