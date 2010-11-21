@@ -5,8 +5,6 @@ package Model;
 use strict;
 use warnings;
 
-use Net::OAuth::Simple;
-
 use Moose;
 use MooseX::NonMoose;
 # use namespace::autoclean; breaks overload
