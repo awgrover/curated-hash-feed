@@ -12,12 +12,13 @@ extends 'DBIx::Class::Core';
 use overload '""' => 'to_s';
 __PACKAGE__->load_components(qw/InflateColumn::DateTime/);
 
-
 use Carp;
 
 our $AUTOLOAD;
-
 use overload cmp => sub { $_[0]->id <=> $_[1]->id; };
+
+# overload @-deref for resultSet
+DBIx::Class::ResultSet->overload::OVERLOAD( '@{}' => sub { [shift->all] } );
 
 sub transaction {
   # execute sub{} in a transaction
