@@ -26,7 +26,6 @@ sub handler {
 
     my $path = $self->{'env'}->{'PATH_INFO'};
     warn "path: $path";
-    warn "at? ",(-f "static/About.html");
     $path = "/index.html" if ($path eq '/') && -f "static/index.html";
 
     my $static = "static".$path;
