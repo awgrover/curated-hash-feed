@@ -18,6 +18,7 @@ use lib qw(lib awgPerl);
 package CurationTwitterStream;
 use WebApp::WebApp; # compile errors won't show up otherwise
 use base qw(WebApp::WebApp);
+use Verbose;
 
 use Memoize;
 
@@ -58,10 +59,21 @@ sub setPageContext_general
         }
 
 
-sub display {
+sub init_access_graph {
   my $self=shift;
-  # $self->session->param(example => "bob");
-  $self->SUPER::display(@_);
+  $self->SUPER::init_access_graph(@_);
+  
+  my $user_id = $self->session->param('user_id');
+  if ($user_id) {
+    my $user = Model::User->find({id=>$user_id});
+    if ($user) {
+      vverbose 0,"Found user $user from '$user_id'";
+      delete $self->request->roles->{'nologin'};
+      $self->request->caps(user => $user);
+      $self->request->roles(moderator => 1)
+      }
+    }
   }
+
 # Go
 __PACKAGE__->new()->main();

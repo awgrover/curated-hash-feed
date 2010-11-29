@@ -1,8 +1,8 @@
 <html>
 <head>
-    <base href="http://bmorelocal.com/" />
+    <base href="{{$base_href}}" />
 
-    <link href="/stylesheets/base.css" media="all" rel="stylesheet" type="text/css" />
+    <link href="stylesheets/base.css" media="all" rel="stylesheet" type="text/css" />
 
     <title>
         Curated Twitter Hashtag Stream
@@ -17,7 +17,7 @@
         <th>Twitter Account</th>
         <th>Hash Tag</th>
         <th>Description</th>
-        <th>Mavens</td>
+        <th>Manage</td>
         <th>Get Twitter Access</th>
       </tr>
       {{iterate $twitters $twit}}
@@ -25,7 +25,12 @@
           <td>{{$twit.twitter_account}}</td>
           <td>{{$twit.hashtag}}</td>
           <td>{{$twit.description}}</td>
-          <td><a href="/twitter/mavens?id={{$twit.id}}">mavens ({{$twit.mavens.count}})</a></td>
+          <td>
+            <ul>
+                <li><a href="twitter/mavens?id={{$twit.id}}">mavens ({{$twit.mavens.count}})</a>
+                <li><a href="twitter/users?id={{$twit.id}}">users ({{$twit.users.count}})</a>
+            </ul>
+          </td>
           <td>
             <form method="POST">
                 {{if $twit.oauth_token}}(already did it){{/if}}
@@ -35,6 +40,6 @@
         </tr>
       {{/iterate}}
     </table>
-    <div><a href="/twitter/new">Add a new twitter-account w/hashtag</a></div>
+    <div><a href="twitter/new">Add a new twitter-account w/hashtag</a></div>
 </body>
 </html>
