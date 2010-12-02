@@ -2,7 +2,7 @@
 <head>
     <base href="{{$base_href}}" />
 
-    <link href="stylesheets/base.css" media="all" rel="stylesheet" type="text/css" />
+    <link href="/stylesheets/base.css" media="all" rel="stylesheet" type="text/css" />
 
     <title>
         Curated Twitter Hashtag Stream
@@ -27,8 +27,8 @@
           <td>{{$twit.description}}</td>
           <td>
             <ul>
-                <li><a href="twitter/mavens?id={{$twit.id}}">mavens ({{$twit.mavens.count}})</a>
-                <li><a href="twitter/users?id={{$twit.id}}">users ({{$twit.users.count}})</a>
+                <li><a href="/twitter/mavens?id={{$twit.id}}">mavens ({{$twit.mavens.count}})</a>
+                <li><a href="/twitter/users?id={{$twit.id}}">users ({{$twit.users.count}})</a>
             </ul>
           </td>
           <td>
@@ -40,6 +40,6 @@
         </tr>
       {{/iterate}}
     </table>
-    <div><a href="twitter/new">Add a new twitter-account w/hashtag</a></div>
+    <div><a href="/twitter/new">Add a new twitter-account w/hashtag</a></div>
 </body>
 </html>

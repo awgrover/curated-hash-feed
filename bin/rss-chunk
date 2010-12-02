@@ -1,0 +1,74 @@
+#!/usr/bin/env perl
+# --- twitter < followingers
+# Retweet the tagged tweets
+
+use strict; use warnings;
+
+use lib qw(lib);
+use env;
+use Twitter_Util;
+use Verbose; $kVerbose = $ENV{'VERBOSE'} || 0;
+use IO::File;
+use TemplateToPerl; 
+
+our $RSS_Dir = 'rss/';
+our $Twitter_Account;
+
+sub main {
+    die "No curated-twitter given" if !$ARGV[0];
+    my $curated_feed = Model::CuratedFeed->find({ twitter_account => $ARGV[0]});
+
+    $Twitter_Account = $curated_feed->twitter_account;
+
+    # get_rss();
+    process_rss_chunk();
+    make_home();
+    copy_home();
+    }
+
+sub make_home {
+  my $hh = IO::File->new(">".home_index()) || die "can't write ".home_index()." $!";
+  print $hh TemplateToPerl->new(datapool => {twitter_account => $Twitter_Account}, filename => "template/_home_index.tmpl")->output;
+  $hh->close;
+  }
+
+sub copy_home {
+  my $cmd = "cp ".home_index()." static/${Twitter_Account}_index.html";
+  system($cmd) && die "cant' $cmd, $!";
+  }
+
+sub rss_file { "$RSS_Dir$Twitter_Account.rss" }
+sub html_chunk_file { "$RSS_Dir$Twitter_Account.rss.html" }
+sub home_index { "$RSS_Dir$Twitter_Account.index.html" }
+
+sub get_rss {
+    my $cmd = "wget -O ".rss_file()." 'http://twitter.com/statuses/user_timeline/$Twitter_Account.rss'";
+    system($cmd)
+      && die("Can't $cmd, $!") ;
+    }
+
+sub process_rss_chunk {
+    my $oh = IO::File->new(">".html_chunk_file()) || die "Can't write ".html_chunk_file().": $!";
+    warn "Going to write ".html_chunk_file();
+
+    my $xsl = 'xsltproc --nonet --nowrite --novalid "template/twitter_rss.xsl" '.rss_file();
+    warn "Process using $xsl";
+
+    my $ch = IO::File->new("$xsl|");
+    die "Can't $xsl, $!" if !$ch;
+
+    while (my $line = <$ch>) {
+      chomp($line);
+      next if $line =~ /^$/;
+      my ($href, $text) = split(/ \| /, $line);
+      $text =~ s/^$Twitter_Account: RT //i;
+      $text =~ s/^\@\S+: RT //g;
+      warn "printing...";
+      printf $oh "<p class='twitter'><a href='%s'>%s</a></p>\n", $href, $text;
+      }
+    $ch->close || die "Can't $xsl, $!";
+    $oh->close;
+    print "Made ".html_chunk_file(),"\n";
+    }
+
+main() if $0 eq __FILE__
