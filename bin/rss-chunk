@@ -15,13 +15,21 @@ our $RSS_Dir = 'rss/';
 our $Twitter_Account;
 
 sub main {
+    my $get=1;
+    if ($ARGV[0] eq '-n') {
+      $get = 0;
+      shift @ARGV;
+      }
+
     die "No curated-twitter given" if !$ARGV[0];
     my $curated_feed = Model::CuratedFeed->find({ twitter_account => $ARGV[0]});
 
     $Twitter_Account = $curated_feed->twitter_account;
 
-    get_rss();
-    process_rss_chunk();
+    if ($get) {
+      get_rss();
+      process_rss_chunk();
+      }
     make_home();
     copy_home();
     }
