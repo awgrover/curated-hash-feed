@@ -20,14 +20,14 @@
         <th>Manage</td>
         <th>Get Twitter Access</th>
       </tr>
-      {{iterate $twitters $twit}}
+      {{iterate $user.curated_feed $twit}}
         <tr>
           <td>{{$twit.twitter_account}}</td>
           <td>{{$twit.hashtag}}</td>
           <td>{{$twit.description}}</td>
           <td>
             <ul>
-                <li><a href="/twitter/mavens?id={{$twit.id}}">mavens ({{$twit.mavens.count}})</a>
+                <li><a href="/twitter:{{$twit.id}}/mavens">mavens ({{$twit.mavens.count}})</a>
                 <li><a href="/twitter/users?id={{$twit.id}}">users ({{$twit.users.count}})</a>
             </ul>
           </td>

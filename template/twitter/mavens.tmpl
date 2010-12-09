@@ -9,17 +9,20 @@
 <body>
     {{if $error}}<div class="status_message">{{$error}}</div>{{/if}}
     {{if $info}}<div class="status_message">{{$info}}</div>{{/if}}
+    {{if ! $user.curated_feed.by_id.{{$twitter_id}}}}<div class="status_message">No such twitter-account, or not owned by you.</div>{{/if}}
 
     <table border="1">
       <tr>
         <th>Twitter Account</th>
         <th>Actions</th>
       </tr>
-      {{iterate $twitter.mavens $twit}}
+      {{iterate $user.curated_feed.by_id.{{$twitter_id}}.mavens $twit}}
         <tr>
           <td>{{$twit.twitter_account}}</td>
           <td>
             <form method="POST">
+                <input type="hidden" name="op" value="Maven.delete({{$twit.id}})"/>
+                <input type="submit" value="Delete"/>
             </form>
           </td>
         </tr>
@@ -27,8 +30,8 @@
     </table>
     <p></p>
     <form method="POST" class="table_form">
-        <input type="hidden" name="id" value="{{$twitter.id}}" />
-        <input type="hidden" name="op" value="Maven.add({{$twitter.id}})" />
+        <input type="hidden" name="id" value="{{$twitter_id}}" />
+        <input type="hidden" name="op" value="Maven.add({{$twitter_id}})" />
         <label>New Mavens <input type = "text" name="twitter_account" size="80" /> (x,y,z..)</label>
         <input type="submit" value="Add" />
     </form>

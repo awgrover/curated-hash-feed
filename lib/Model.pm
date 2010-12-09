@@ -87,4 +87,40 @@ sub to_s {
   use warnings 'uninitialized';
   }
 
+sub by_id {
+  my $self=shift;
+  row_By_ID->new( result_set => $self);
+  }
+
+package row_By_ID;
+use Moose;
+has result_set => (is => 'ro');
+sub FETCH {
+  my $rs = shift->result_set;
+  $rs->id == $_[0] ? $rs : undef;
+  }
+
+use DBIx::Class::ResultSet;
+package DBIx::Class::ResultSet;
+# __PACKAGE__->meta->make_mutable;
+sub by_id {
+  my $self = shift;
+
+  if (defined $_[0]) {
+    $self->find({id => $_[0]});
+    }
+  else {
+    set_By_ID->new(result_set => $self);
+    }
+  }
+# __PACKAGE__->meta->make_immutable;
+
+package set_By_ID;
+use Moose;
+has result_set => (is => 'ro');
+sub FETCH {
+  my $rs = shift->result_set;
+  $rs->find({id => $_[0]});
+  }
+
 1;

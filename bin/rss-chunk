@@ -63,7 +63,6 @@ sub process_rss_chunk {
       my ($href, $text) = split(/ \| /, $line);
       $text =~ s/^$Twitter_Account: RT //i;
       $text =~ s/^\@\S+: RT //g;
-      warn "printing...";
       printf $oh "<p class='twitter'><a href='%s'>%s</a></p>\n", $href, $text;
       }
     $ch->close || die "Can't $xsl, $!";

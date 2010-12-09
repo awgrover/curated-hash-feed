@@ -22,4 +22,17 @@ sub do_add {
     }
   }
 
+sub do_delete {
+  my $self=shift;
+  my ($id) = @_;
+  
+  my $maven = $self->request->caps->{'user'}->curated_feed->mavens->by_id($id);
+  if ($maven) {
+    $maven->delete;
+    $self->info('Deleted '.$maven->twitter_account);
+    }
+  else {
+    $self->error("No such maven, or doesn't belong to you");
+    }
+  }
 1;

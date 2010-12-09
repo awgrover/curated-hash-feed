@@ -147,6 +147,6 @@ sub oauth {
     token_secret => $self->oauth_token_secret,
   };
   }
-        
+
 __PACKAGE__->meta->make_immutable;
 1;
