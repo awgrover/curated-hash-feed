@@ -104,21 +104,6 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 mavens
-
-Type: has_many
-
-Related object: L<Model::Maven>
-
-=cut
-
-__PACKAGE__->has_many(
-  "mavens",
-  "Model::Maven",
-  { "foreign.curated_feed_id" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 1 },
-);
-
 =head2 users
 
 Type: has_many
@@ -134,9 +119,24 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 1 },
 );
 
+=head2 mavens
 
-# Created by DBIx::Class::Schema::Loader v0.07001 @ 2010-11-28 11:14:04
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:in1g5qI9Z4NEEHPL9ea3Zw
+Type: has_many
+
+Related object: L<Model::Maven>
+
+=cut
+
+__PACKAGE__->has_many(
+  "mavens",
+  "Model::Maven",
+  { "foreign.curated_feed_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 1 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07001 @ 2010-12-19 09:38:25
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CYwXblX6gPmPDPDL1FKx6w
 
 
 sub oauth {
