@@ -9,10 +9,15 @@ use env;
 use Twitter_Util;
 use Verbose; $kVerbose = $ENV{'VERBOSE'} || 0;
 use IO::File;
+use DateTime::Format::Strptime;
+use DateTime::Format::Natural; 
+use Date::Manip::Date;
 use TemplateToPerl; 
+use Storable qw(freeze);
 
 our $RSS_Dir = 'rss/';
 our $Twitter_Account;
+our $CT_NO_DATE=-1;
 
 sub main {
     my $get=1;
@@ -20,6 +25,7 @@ sub main {
       $get = 0;
       shift @ARGV;
       }
+    $CT_NO_DATE = $ENV{'STOP_AT_FIRST_NODATE'} || -1;
 
     die "No curated-twitter given" if !$ARGV[0];
     my $curated_feed = Model::CuratedFeed->find({ twitter_account => $ARGV[0]});
@@ -28,13 +34,14 @@ sub main {
 
     if ($get) {
       get_rss();
-      process_rss_chunk();
       }
+    process_rss_chunk();
     make_home();
     copy_home();
     }
 
 sub make_home {
+  warn "Make ".home_index()." from template/_home_index.tmpl";
   my $hh = IO::File->new(">".home_index()) || die "can't write ".home_index()." $!";
   print $hh TemplateToPerl->new(datapool => {twitter_account => $Twitter_Account}, filename => "template/_home_index.tmpl")->output;
   $hh->close;
@@ -56,8 +63,6 @@ sub get_rss {
     }
 
 sub process_rss_chunk {
-    my $oh = IO::File->new(">".html_chunk_file()) || die "Can't write ".html_chunk_file().": $!";
-    warn "Going to write ".html_chunk_file();
 
     my $xsl = "xsltproc --nonet --nowrite --novalid '${RSS_Dir}twitter_rss.xsl' ".rss_file();
     warn "Process using $xsl";
@@ -65,17 +70,146 @@ sub process_rss_chunk {
     my $ch = IO::File->new("$xsl|");
     die "Can't $xsl, $!" if !$ch;
 
+    our $CT = $ENV{'STOP_AT'} || -1;
+
+    my @tweets;
     while (my $line = <$ch>) {
       chomp($line);
       next if $line =~ /^$/;
-      my ($href, $text) = split(/ \| /, $line);
+      my ($href, $guid, $pubDate, $text) = split(/ \| /, $line);
       $text =~ s/^$Twitter_Account: RT //i;
       $text =~ s/^\@\S+: RT //g;
-      printf $oh "<p class='twitter'><a href='%s'>%s</a></p>\n", $href, $text;
+      my $happen_at = guess_a_date($pubDate, $text);
+
+      $pubDate =~ s/^[^,], //;
+      my $parsed_pubDate =  DateTime::Format::Strptime->new( pattern => '%d %b %Y %H:%M:%S %z', locale => 'en_US' )->parse_datetime($pubDate);
+      
+      print $text,"\n\t",$happen_at,"\n";
+      push @tweets, {
+        text => $text,
+        href => $href,
+        tweet_at => $parsed_pubDate,
+        happen_at => $happen_at,
+        };
+
+      last if $CT == scalar(@tweets);
       }
     $ch->close || die "Can't $xsl, $!";
+
+    my $oh = IO::File->new(">".html_chunk_file()) || die "Can't write ".html_chunk_file().": $!";
+    warn "xGoing to write ".html_chunk_file();
+    print $oh TemplateToPerl->new(filename => "template/_rss_as_body.tmpl", datapool => {tweets => \@tweets})->output;
     $oh->close;
     print "Made ".html_chunk_file(),"\n";
     }
 
+sub guess_a_date {
+  return '' if $ENV{'NO_GUESS_A_DATE'};
+  my ($pubDate, $text) = @_;
+
+  my $date = '';
+
+
+  vverbose 1, "Looking in $pubDate : $text";
+  my $parsed_pubDate =  Date::Manip::Date->new($pubDate);
+  my $base_manip =  $parsed_pubDate->printf('%P');
+  my %dt_hash;
+  @dt_hash{qw(year month day hour minute second time_zone)} = ($parsed_pubDate->value, $parsed_pubDate->printf('%z'));
+
+  my $base_natural = DateTime->new(%dt_hash);
+
+  $text =~ s/[[:punct:]\s]+$//;
+
+  PARSE:
+  while ($text) {
+    my $text_tail = $text;
+    while ($text_tail) {
+      $text_tail =~ s/[\s[:punct:]]+$//;
+
+      # some fixups for missing time-words
+      $text_tail =~ s/^tonight\b/today/;
+
+      vverbose 4, ">> $text_tail|\n";
+      my $natural = DateTime::Format::Natural->new(
+        datetime => $base_natural,
+        prefer_future => 1
+        );
+      my $manip = Date::Manip::Date->new();
+        $manip->config(setdate => $base_manip);
+
+      # try data::manip
+      my $err = $manip->parse($text_tail);
+      vverbose 4, "\tMANIP: $err ",$manip->err,"\n";
+      if (!$err) {
+        my %for_dt; @for_dt{qw(year month day hour minute second)} = $manip->value;
+        $date = DateTime->new(%for_dt, time_zone => $manip->tz->curr_zone);
+        vverbose 1, "\tFOUND Date::Manip::Date: $date $text_tail\n";
+        last PARSE;
+        }
+
+      # try DateTime::Format::Natural
+      my $rez = $natural->parse_datetime($text_tail);
+      if ($natural->success) {
+        $date = $rez;
+        vverbose 1, "\tFOUND DateTime::Format::Natural: $date $text_tail\n";
+        last PARSE;
+        }
+
+      if (! ($text_tail =~ s/\s+\S+$//)) {
+        $text_tail = '';
+        }
+      }
+
+    $text =~ s/^\S+\s*//;
+    }
+
+  vverbose 1,"NOT FOUND" if !$date;
+  $CT_NO_DATE-- if !$date && $CT_NO_DATE > 0;
+  warn "## $CT_NO_DATE" if $CT_NO_DATE >=0;
+
+  die if $CT_NO_DATE == 0;
+  return $date;
+  }
+    
+package DateTime;
+use DateTime::Duration::Fuzzy qw(time_ago);
+use DateTime::Format::Strptime;
+
+sub human {
+  my $self=shift;
+
+  if ($self->hour == 0 && $self->minute == 0)  {
+    $self->strftime('%a, %d %b %Y');
+    }
+  else {
+    $self->strftime('%a, %d %b %Y %l:%M%P');
+    }
+  }
+  
+sub human_ago {
+    my $self = shift;
+
+    my $now = DateTime->now;
+    # $now = DateTime::Format::Strptime->new( pattern => '%d %b %Y %H:%M:%S', locale => 'en_US' )->parse_datetime('09 Dec 2010 14:35:07');
+    my $ago = $now - $self;
+    my $when;
+    if ($ago->is_negative) {
+      $when = 'just now';
+      }
+    if ($ago->hours < 2 && int($self->jd) == int($now->jd)) {
+      $when = time_ago($self, $now);
+      }
+    elsif (int($self->jd) == int($now->jd)) {
+      $when = $self->strftime("%l:%M%P");
+      }
+    elsif (int($self->jd) == int($now->jd - 1)) {
+      $when = $self->strftime("Yesterday, %l:%M%P");
+      }
+    else {
+      $when = $self->strftime('%a, %d %b %Y %l:%M%P');
+      }
+    $when;
+    }
+
+package main;
 main() if $0 eq __FILE__

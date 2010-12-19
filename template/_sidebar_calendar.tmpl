@@ -1,0 +1,106 @@
+<style>
+    .post-content {
+        position:relative;
+        }
+    table.calendar {
+        table-layout:fixed;
+        border-style:solid;
+        border-width:1px;
+        width:100%;
+        border-collapse:collapse;
+        background-color: #DDDDFF;
+        position:relative;
+        top: 0px;
+        left: 0px;
+        }
+    table.calendar th.month {
+        text-align: center;
+        }
+    table.calendar th.year {
+        text-align: center;
+        }
+    table.calendar th.nav-before {
+        text-align: left;
+        }
+    table.calendar th.nav-after {
+        text-align: right;
+        }
+    table.calendar td.day {
+        border-style:none;
+        white-space:nowrap;
+        text-align: center;
+        }
+    table.calendar td.event {
+        background-color: #BBBBFF;
+        border-style:solid;
+        border-width:1px;
+        border-color: #9999DD;
+        text-decoration:underline;
+        }
+    table.calendar td.day_empty {
+        border-style:none
+        }
+    table.calendar tr.week td.day {
+        border-style:none;
+        text-align: center;
+        }
+    table.calendar tr.week td.day {
+        border-bottom: 1px solid;
+        }
+    table.calendar span.event {
+        display: none;
+        }
+    table.calendar  td.event:hover span.event {
+        display: block;
+        position: absolute;
+        top: 6em;
+        right: 0px;
+        z-index: 99;
+        border-style:solid;
+        border-width:2px;
+        border-color: #BBBBFF;
+        min-width:100%;
+        opacity: 1;
+        background-color: #DDDDFF;
+        /* white-space:wrap;
+        width:100%; */
+        }
+
+</style>
+<table class='calendar'>
+    <tr>
+        <th class="nav-before">&lt;</th>
+        <th class="month" colspan="3">June</th>
+        <th class="nav-after">&gt;</th>
+        <th class="year" colspan="2">2010</th>
+    </tr>
+    <tr class="week">
+        <td class='day'>Su</td>
+        <td class='day'>Mo</td>
+        <td class='day'>Tu</td>
+        <td class='day'>We</td>
+        <td class='day'>Th</td>
+        <td class='day'>Fr</td>
+        <td class='day'>Sa</td>
+    </tr>
+    <tr><td colspan="7">use template to make rss content on left, have calendar made initially from template, then ajax draw from db</td></tr>
+    <tr>
+        <td class='day'>1</td>
+        <td class='day'>2</td>
+        <td class='day event'>3<span class="event">STuff to say STuff to saySTuff to say STuff to say<br/> omre</span></td>
+        <td class='day'>4</td>
+        <td class='day'>5</td>
+        <td class='day'>6</td>
+        <td class='day_empty'></td>
+    </tr>
+    <tr>
+        <td class='day_empty'></td>
+        <td class='day_empty'></td>
+        <td class='day'>12</td>
+        <td class='day'>15</td>
+        <td class='day'>16</td>
+        <td class='day'>17</td>
+        <td class='day'>18</td>
+    </tr>
+</table>
+

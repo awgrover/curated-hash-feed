@@ -16,7 +16,9 @@ use IO::File;
 
 sub setup {
     my $self=shift;
+    my $verbose=$ENV{'VERBOSE'};
     local %ENV=();
+    $ENV{'VERBOSE'} = $verbose if defined $verbose;
     $self->setup_environment_from_metadata(@_);
     $self->{'env'} = \%ENV;
     }

@@ -11,7 +11,14 @@
 </xsl:template>
 
 <xsl:template match="item">
-    <xsl:apply-templates select="link/text()" /> | <xsl:apply-templates select="title/text()" /><xsl:text>
+    <xsl:apply-templates select="link/text()" />
+    <xsl:text> | </xsl:text>
+    <xsl:apply-templates select="guid/text()" />
+    <xsl:text> | </xsl:text>
+    <xsl:apply-templates select="pubDate/text()" />
+    <xsl:text> | </xsl:text>
+    <xsl:apply-templates select="title/text()" />
+    <xsl:text>
 </xsl:text>
 </xsl:template>
 

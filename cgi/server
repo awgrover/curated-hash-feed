@@ -52,6 +52,7 @@ sub setPageContext_general
         # Put objects in the context: all requests
         my $pg = $self->pageContext;
 
+        $pg->{'twitter_account'} = 'bmorelocal';
         $pg->{'session'} = $self->session->param;
         $pg->{'ENV'} = \%ENV;
 
