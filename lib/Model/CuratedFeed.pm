@@ -138,6 +138,13 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07001 @ 2010-12-19 09:38:25
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CYwXblX6gPmPDPDL1FKx6w
 
+use  SidebarCalendar;
+
+__PACKAGE__->has_many(
+  events => "Model::Event",
+  { "foreign.curated_feed_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 1 },
+);
 
 sub oauth {
   my $self = shift;
@@ -146,6 +153,11 @@ sub oauth {
     token => $self->oauth_token, 
     token_secret => $self->oauth_token_secret,
   };
+  }
+
+sub sidebar_calendar {
+  my $self=shift;
+  SidebarCalendar->new(date => DateTime->now, curated_feed => $self);
   }
 
 __PACKAGE__->meta->make_immutable;

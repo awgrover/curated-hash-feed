@@ -17,6 +17,7 @@ use Storable qw(freeze);
 
 our $RSS_Dir = 'rss/';
 our $Twitter_Account;
+our $Curated_Feed;
 our $CT_NO_DATE=-1;
 
 sub main {
@@ -28,9 +29,9 @@ sub main {
     $CT_NO_DATE = $ENV{'STOP_AT_FIRST_NODATE'} || -1;
 
     die "No curated-twitter given" if !$ARGV[0];
-    my $curated_feed = Model::CuratedFeed->find({ twitter_account => $ARGV[0]});
+    $Curated_Feed = Model::CuratedFeed->find({ twitter_account => $ARGV[0]});
 
-    $Twitter_Account = $curated_feed->twitter_account;
+    $Twitter_Account = $Curated_Feed->twitter_account;
 
     if ($get) {
       get_rss();
@@ -43,7 +44,15 @@ sub main {
 sub make_home {
   warn "Make ".home_index()." from template/_home_index.tmpl";
   my $hh = IO::File->new(">".home_index()) || die "can't write ".home_index()." $!";
-  print $hh TemplateToPerl->new(datapool => {twitter_account => $Twitter_Account}, filename => "template/_home_index.tmpl")->output;
+  print $hh TemplateToPerl->new(
+    datapool => {
+      # FIXME: duplicating the cgi/server->setPageContext_general
+      now => DateTime->now,
+      twitter_account => $Twitter_Account,
+      curated_feed => $Curated_Feed,
+      }, 
+    filename => "template/_home_index.tmpl"
+    )->output;
   $hh->close;
   }
 
@@ -92,6 +101,15 @@ sub process_rss_chunk {
         happen_at => $happen_at,
         };
 
+      if ($happen_at) {
+        if (my $event = Model::Event->find({twitter_guid => $guid})) {
+          $event->update({event_date => $happen_at, tweet => $text});
+          }
+        else {
+          $Curated_Feed->add_to_events({twitter_guid => $guid, event_date => $happen_at, tweet => $text}) ;
+          }
+        }
+
       last if $CT == scalar(@tweets);
       }
     $ch->close || die "Can't $xsl, $!";
@@ -137,13 +155,15 @@ sub guess_a_date {
       my $manip = Date::Manip::Date->new();
         $manip->config(setdate => $base_manip);
 
+      last if ($text_tail =~ /^\d{1,4}$/); 
+
       # try data::manip
       my $err = $manip->parse($text_tail);
       vverbose 4, "\tMANIP: $err ",$manip->err,"\n";
       if (!$err) {
         my %for_dt; @for_dt{qw(year month day hour minute second)} = $manip->value;
         $date = DateTime->new(%for_dt, time_zone => $manip->tz->curr_zone);
-        vverbose 1, "\tFOUND Date::Manip::Date: $date $text_tail\n";
+        vverbose 1, "\tFOUND Date::Manip::Date: $date '$text_tail'\n";
         last PARSE;
         }
 
@@ -151,7 +171,7 @@ sub guess_a_date {
       my $rez = $natural->parse_datetime($text_tail);
       if ($natural->success) {
         $date = $rez;
-        vverbose 1, "\tFOUND DateTime::Format::Natural: $date $text_tail\n";
+        vverbose 1, "\tFOUND DateTime::Format::Natural: $date '$text_tail'\n";
         last PARSE;
         }
 
@@ -190,13 +210,12 @@ sub human_ago {
     my $self = shift;
 
     my $now = DateTime->now;
-    # $now = DateTime::Format::Strptime->new( pattern => '%d %b %Y %H:%M:%S', locale => 'en_US' )->parse_datetime('09 Dec 2010 14:35:07');
     my $ago = $now - $self;
     my $when;
     if ($ago->is_negative) {
       $when = 'just now';
       }
-    if ($ago->hours < 2 && int($self->jd) == int($now->jd)) {
+    if ($ago->hours <= 2 && int($self->jd) == int($now->jd)) {
       $when = time_ago($self, $now);
       }
     elsif (int($self->jd) == int($now->jd)) {
@@ -204,6 +223,9 @@ sub human_ago {
       }
     elsif (int($self->jd) == int($now->jd - 1)) {
       $when = $self->strftime("Yesterday, %l:%M%P");
+      }
+    elsif (int($self->jd)+6 > int($now->jd)) {
+      $when = $self->strftime('%a, %l:%M%P');
       }
     else {
       $when = $self->strftime('%a, %d %b %Y %l:%M%P');

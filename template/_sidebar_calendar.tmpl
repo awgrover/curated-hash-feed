@@ -1,5 +1,6 @@
 <style>
     .post-content {
+        /* can't get the table to be the "enclosing non-static" */
         position:relative;
         }
     table.calendar {
@@ -25,10 +26,17 @@
     table.calendar th.nav-after {
         text-align: right;
         }
+
     table.calendar td.day {
         border-style:none;
         white-space:nowrap;
         text-align: center;
+        }
+    table.calendar td.today {
+        font-weight:bold;
+        }
+    table.calendar td.today span {
+        font-weight:normal;
         }
     table.calendar td.event {
         background-color: #BBBBFF;
@@ -53,54 +61,53 @@
     table.calendar  td.event:hover span.event {
         display: block;
         position: absolute;
-        top: 6em;
+        top: 10em;
         right: 0px;
         z-index: 99;
         border-style:solid;
         border-width:2px;
         border-color: #BBBBFF;
-        min-width:100%;
         opacity: 1;
         background-color: #DDDDFF;
-        /* white-space:wrap;
-        width:100%; */
+        white-space:normal;
+        width:250%;
+        text-align: left;
+        padding-left: 5em;
+        text-indent: -5em;
         }
 
 </style>
 <table class='calendar'>
     <tr>
-        <th class="nav-before">&lt;</th>
-        <th class="month" colspan="3">June</th>
-        <th class="nav-after">&gt;</th>
+        <th class="nav-before"></th>
+        <th class="month" colspan="3">{{$curated_feed.sidebar_calendar.month_name}}</th>
+        <th class="nav-after"></th>
         <th class="year" colspan="2">2010</th>
     </tr>
     <tr class="week">
-        <td class='day'>Su</td>
-        <td class='day'>Mo</td>
-        <td class='day'>Tu</td>
-        <td class='day'>We</td>
-        <td class='day'>Th</td>
-        <td class='day'>Fr</td>
-        <td class='day'>Sa</td>
+        {{iterate $curated_feed.sidebar_calendar.short_abbrev_weekdays $dayname}}
+        <td class='day'>{{$dayname}}</td>
+        {{/iterate}}
     </tr>
-    <tr><td colspan="7">use template to make rss content on left, have calendar made initially from template, then ajax draw from db</td></tr>
-    <tr>
-        <td class='day'>1</td>
-        <td class='day'>2</td>
-        <td class='day event'>3<span class="event">STuff to say STuff to saySTuff to say STuff to say<br/> omre</span></td>
-        <td class='day'>4</td>
-        <td class='day'>5</td>
-        <td class='day'>6</td>
-        <td class='day_empty'></td>
-    </tr>
-    <tr>
-        <td class='day_empty'></td>
-        <td class='day_empty'></td>
-        <td class='day'>12</td>
-        <td class='day'>15</td>
-        <td class='day'>16</td>
-        <td class='day'>17</td>
-        <td class='day'>18</td>
-    </tr>
+    {{iterate $curated_feed.sidebar_calendar.weeks $week}}
+        <tr>
+            {{iterate $week $day}}
+                {{if $day}}
+                    <td class='day{{if $day.events}} event{{/if}}{{if $day.date.day eq $now.day}} today{{/if}}'>
+                        {{$day.date.day}}
+                        {{if $day.events}}
+                            <span class="event">
+                                {{iterate $day.events $event}}
+                                    <div class='tweet'>{{$event.time}} {{$event.tweet}}</div>
+                                {{/iterate}}
+                            </span>
+                        {{/if}}
+                    </td>
+                {{else}}
+                    <td class='day_empty'></td>
+                {{/if}}
+            {{/iterate}}
+        </tr>
+    {{/iterate}}
 </table>
 
