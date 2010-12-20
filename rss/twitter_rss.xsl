@@ -17,23 +17,10 @@
     <xsl:text> | </xsl:text>
     <xsl:apply-templates select="pubDate/text()" />
     <xsl:text> | </xsl:text>
-    <xsl:apply-templates select="title/text()" />
-    <xsl:text>
+    <xsl:value-of select="translate(title/text(),'&#10;&#13;',' ')" /><xsl:text>
 </xsl:text>
 </xsl:template>
 
-<xsl:template match="xitem">
-    <xsl:element name="p">
-        <xsl:element name="a">
-            <xsl:attribute name="href">
-                <xsl:apply-templates select="link/text()" />
-            </xsl:attribute>
-            <xsl:apply-templates select="title/text()" />
-        </xsl:element>
-    </xsl:element>
-    <xsl:text>
-</xsl:text>
-</xsl:template>
 
 <!-- identity starts here -->
 <xsl:template match="*">
