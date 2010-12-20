@@ -1,2 +1,14 @@
+ServerAdmin webmaster@localhost
+
+DocumentRoot /var/www
+
+ErrorLog /var/log/apache2/error.log
+
+# Possible values include: debug, info, notice, warn, error, crit,
+# alert, emerg.
+LogLevel warn
+
+CustomLog /var/log/apache2/access.log combined
+
 RewriteEngine on
 RewriteRule (.*) http://localhost:3100$1 [P]
