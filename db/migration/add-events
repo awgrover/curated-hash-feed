@@ -1,0 +1,14 @@
+dbdo <<EOS;
+create table event (
+    id INTEGER PRIMARY KEY NOT NULL,
+    twitter_guid text UNIQUE not null,
+    -- maven_id integer REFERENCES maven(id) NOT NULL,
+    curated_feed_id integer REFERENCES curate_feed(id) NOT NULL,
+    tweet text not null,
+    event_date datetime not null,
+    created_at datetime DEFAULT current_timestamp, 
+    updated_at datetime DEFAULT current_timestamp 
+    );
+EOS
+
+update_models;
