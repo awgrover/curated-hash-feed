@@ -29,6 +29,11 @@ sub handler {
     $path = "/index.html" if ($path eq '/') && -f "static/index.html";
 
     my $static = "static".$path;
+
+    $static = 'disable.html' if (-f 'disable.html');
+    $static = 'disable_cgi.html' if (! -f $static && -f 'disable_cgi.html');
+
+    warn "static $static ?".(-f $static);
     if (-f $static) {
         warn "Deliver static: $static";
         print "HTTP/1.0 200 OK\r\n";
@@ -39,6 +44,7 @@ sub handler {
         while (<$sh>) { print $_ };
         return;
         }
+
 
     my @candidates = `find cgi -type f -perm -u+x`;
     if (@candidates == 0) {
