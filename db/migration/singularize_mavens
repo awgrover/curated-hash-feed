@@ -1,0 +1,13 @@
+dbdo <<EOS;
+CREATE TABLE maven ( 
+    id INTEGER PRIMARY KEY NOT NULL, 
+    curated_feed_id integer REFERENCES curated_feed(id) NOT NULL,
+    twitter_account text not null, 
+    created_at datetime DEFAULT current_timestamp, 
+    updated_at datetime DEFAULT current_timestamp 
+    );
+EOS
+
+dbdo 'insert into maven select * from mavens';
+dbdo 'drop table mavens';
+1;
