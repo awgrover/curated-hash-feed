@@ -1,0 +1,3 @@
+{{iterate $tweets $tweet}}
+<p>{{$tweet.tweet_at.human_ago}} <a href='{{$tweet.href}}'>{{$tweet.text}}</a>{{if $tweet.happen_at}} {{$tweet.happen_at.human}}{{/if}}</p>
+{{/iterate}}

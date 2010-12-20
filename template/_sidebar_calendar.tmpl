@@ -1,0 +1,113 @@
+<style>
+    .post-content {
+        /* can't get the table to be the "enclosing non-static" */
+        position:relative;
+        }
+    table.calendar {
+        table-layout:fixed;
+        border-style:solid;
+        border-width:1px;
+        width:100%;
+        border-collapse:collapse;
+        background-color: #DDDDFF;
+        position:relative;
+        top: 0px;
+        left: 0px;
+        }
+    table.calendar th.month {
+        text-align: center;
+        }
+    table.calendar th.year {
+        text-align: center;
+        }
+    table.calendar th.nav-before {
+        text-align: left;
+        }
+    table.calendar th.nav-after {
+        text-align: right;
+        }
+
+    table.calendar td.day {
+        border-style:none;
+        white-space:nowrap;
+        text-align: center;
+        }
+    table.calendar td.today {
+        font-weight:bold;
+        }
+    table.calendar td.today span {
+        font-weight:normal;
+        }
+    table.calendar td.event {
+        background-color: #BBBBFF;
+        border-style:solid;
+        border-width:1px;
+        border-color: #9999DD;
+        text-decoration:underline;
+        }
+    table.calendar td.day_empty {
+        border-style:none
+        }
+    table.calendar tr.week td.day {
+        border-style:none;
+        text-align: center;
+        }
+    table.calendar tr.week td.day {
+        border-bottom: 1px solid;
+        }
+    table.calendar span.event {
+        display: none;
+        }
+    table.calendar  td.event:hover span.event {
+        display: block;
+        position: absolute;
+        top: 10em;
+        right: 0px;
+        z-index: 99;
+        border-style:solid;
+        border-width:2px;
+        border-color: #BBBBFF;
+        opacity: 1;
+        background-color: #DDDDFF;
+        white-space:normal;
+        width:250%;
+        text-align: left;
+        padding-left: 5em;
+        text-indent: -5em;
+        }
+
+</style>
+<table class='calendar'>
+    <tr>
+        <th class="nav-before"></th>
+        <th class="month" colspan="3">{{$curated_feed.sidebar_calendar.month_name}}</th>
+        <th class="nav-after"></th>
+        <th class="year" colspan="2">2010</th>
+    </tr>
+    <tr class="week">
+        {{iterate $curated_feed.sidebar_calendar.short_abbrev_weekdays $dayname}}
+        <td class='day'>{{$dayname}}</td>
+        {{/iterate}}
+    </tr>
+    {{iterate $curated_feed.sidebar_calendar.weeks $week}}
+        <tr>
+            {{iterate $week $day}}
+                {{if $day}}
+                    <td class='day{{if $day.events}} event{{/if}}{{if $day.date.day eq $now.day}} today{{/if}}'>
+                        {{$day.date.day}}
+                        {{if $day.events}}
+                            <span class="event">
+                                {{iterate $day.events $event}}
+                                    <div class='tweet'>{{$event.time}} {{$event.tweet}}</div>
+                                {{/iterate}}
+                            </span>
+                        {{/if}}
+                    </td>
+                {{else}}
+                    <td class='day_empty'></td>
+                {{/if}}
+            {{/iterate}}
+        </tr>
+    {{/iterate}}
+</table>
+

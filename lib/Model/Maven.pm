@@ -18,7 +18,7 @@ Model::Maven
 
 =cut
 
-__PACKAGE__->table("mavens");
+__PACKAGE__->table("maven");
 
 =head1 ACCESSORS
 
@@ -93,8 +93,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07001 @ 2010-11-21 12:10:18
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WTnUlCwVdI11z2rcKPwMpg
+# Created by DBIx::Class::Schema::Loader v0.07001 @ 2010-12-19 14:44:37
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7bBn+Ue1vhv+Rl4W7t0dfA
 
 
 # You can replace this text with custom content, and it will be preserved on regeneration

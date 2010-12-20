@@ -18,6 +18,8 @@ use lib qw(lib awgPerl);
 package CurationTwitterStream;
 use WebApp::WebApp; # compile errors won't show up otherwise
 use base qw(WebApp::WebApp);
+use DateTime;
+use SidebarCalendar;
 use Verbose;
 
 use Memoize;
@@ -52,6 +54,9 @@ sub setPageContext_general
         # Put objects in the context: all requests
         my $pg = $self->pageContext;
 
+        $pg->{'now'} = DateTime->now;
+        $pg->{'twitter_account'} = 'bmorelocal';
+        $pg->{'curated_feed'} = Model::CuratedFeed->find({twitter_account => $pg->{'twitter_account'} });
         $pg->{'session'} = $self->session->param;
         $pg->{'ENV'} = \%ENV;
 
